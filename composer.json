@@ -3,7 +3,8 @@
     "description": "general library for php erp project",
     "require": {
         "bshaffer/oauth2-server-php": "^1.8",
-        "nikic/php-parser": "^2.0"
+        "nikic/php-parser": "^2.0",
+        "firebase/php-jwt": "~2.2"
     },
     "autoload": {
         "psr-4": {"sys\\": "src/"}
