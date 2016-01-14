@@ -75,7 +75,7 @@ if (!function_exists('hash_equals')) {
 	 *
 	 * @author Brent Shaffer <bshafs at gmail dot com>
 	 */
-	class Pdo implements
+	class PDO implements
 		AuthorizationCodeInterface,
 		AccessTokenInterface,
 		ClientCredentialsInterface,
@@ -90,8 +90,8 @@ if (!function_exists('hash_equals')) {
 		/* crypt from https://alias.io/2010/01/store-passwords-safely-with-php-and-mysql/ */
 		public static function encryptPassword($password){
 			$cost = 10;
-			$salt = strtr(base64_encode(mcrypt_create_iv(16, MCRYPT_DEV_URANDOM)), '+', '.');
-			$salt = sprintf("$2a$%02d$", $cost).$salt;
+			$salt = strtr(base64_encode(openssl_random_pseudo_bytes(16)), '+', '.');
+			$salt = sprintf("$2y$%02d$", $cost).$salt;
 			return crypt($password, $salt);
 		}
 
