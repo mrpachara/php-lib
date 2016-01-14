@@ -1,48 +1,6 @@
 <?php
 	namespace sys;
 
-	class HttpException extends \Exception {
-		function __construct($message, $code = 500, $previous = null){
-			parent::__construct($message, $code, $previous);
-		}
-	}
-
-	class HttpBadRequestException extends HttpException {
-		function __construct($message = 'Bad Request', $previous = null){
-			parent::__construct($message, 400, $previous);
-		}
-	}
-
-	class HttpForbiddenException extends HttpException {
-		function __construct($message = 'Forbiddent', $previous = null){
-			parent::__construct($message, 403, $previous);
-		}
-	}
-
-	class HttpNotFoundException extends HttpException {
-		function __construct($message = 'Not Found', $previous = null){
-			parent::__construct($message, 404, $previous);
-		}
-	}
-
-	class HttpMethodNotAllowedException extends HttpException {
-		function __construct($message = 'Method Not Allowed', $previous = null){
-			parent::__construct($message, 405, $previous);
-		}
-	}
-
-	class HttpInternalServerErrorException extends HttpException {
-		function __construct($message = 'Internal Server Error', $previous = null){
-			parent::__construct($message, 500, $previous);
-		}
-	}
-
-	class HttpNotImplementedException extends HttpException {
-		function __construct($message = 'Not Implemented', $previous = null){
-			parent::__construct($message, 501, $previous);
-		}
-	}
-
 	class Rest {
 		const CONTENTYPE_TYPE_PROPERTY_NAME = 'Content-Type';
 		const DEFAULT_RESPONSE_MESSAGE = 'NONE';

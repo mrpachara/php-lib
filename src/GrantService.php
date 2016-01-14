@@ -1,12 +1,6 @@
 <?php
 	namespace sys;
 
-	class RestTokenException extends HttpException {
-		function __construct($message, $code = null, $previous = null){
-			parent::__construct($message, $code, $previous);
-		}
-	}
-
 	class GrantService{
 		private $conf;
 		private $oauth2server;

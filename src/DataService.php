@@ -1,10 +1,6 @@
 <?php
 	namespace sys;
 
-	class DataServiceException extends \Exception {
-
-	}
-
 	class DataService {
 		const ANNO_INITSQLSTMT_MAP = [];
 		const ANNO_EXISTEDMETHOD_MAP = [];

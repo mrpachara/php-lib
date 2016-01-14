@@ -1,4 +1,6 @@
 <?php
+namespace sys;
+
 use PhpParser\Error;
 use PhpParser\ParserFactory;
 use PhpParser\Node;
