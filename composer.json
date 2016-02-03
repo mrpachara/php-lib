@@ -1,5 +1,5 @@
 {
-    "name": "pachara/php-lib",
+    "name": "mrpachara/php-lib",
     "description": "general library for php erp project",
     "require": {
         "bshaffer/oauth2-server-php": "^1.8",
