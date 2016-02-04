@@ -87,7 +87,6 @@ if (!function_exists('hash_equals')) {
 		UserClaimsInterface,
 		OpenIDAuthorizationCodeInterface
 	{
-		/* crypt from https://alias.io/2010/01/store-passwords-safely-with-php-and-mysql/ */
 		public static function encryptPassword($password){
 			$cost = 10;
 			$salt = strtr(base64_encode(openssl_random_pseudo_bytes(16)), '+', '.');
@@ -114,7 +113,7 @@ if (!function_exists('hash_equals')) {
 				'refresh_token_table' => 'oauth_refresh_tokens',
 				'code_table' => 'oauth_authorization_codes',
 				'user_table' => 'oauth_users',
-				//'jwt_table'  => 'oauth_jwt',
+				'jwt_table'  => 'oauth_jwt',
 				'jwt_table'  => 'accclient',
 				'jti_table'  => 'oauth_jti',
 				'scope_table'  => 'oauth_scopes',
