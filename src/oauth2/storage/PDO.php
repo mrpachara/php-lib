@@ -189,7 +189,6 @@ if (!function_exists('hash_equals')) {
 			if(!empty($acc['id_sys_account'])){
 				$id_groups_prepared = [];
 				$id_accounts = [$acc['id_sys_account']];
-				$id_groups = [];
 
 				$stmt_role = $this->getPdo()->prepare("
 					SELECT
@@ -200,56 +199,30 @@ if (!function_exists('hash_equals')) {
 
 				$stmt_group = $this->getPdo()->prepare("
 					SELECT
-						  sys_groupaccount.id_sys_group AS id_sys_group
-						, sys_group.id_sys_account AS id_sys_account
+						  sys_group.id_sys_account
 					FROM {$this->config['sys.groupaccount']} AS sys_groupaccount
 						INNER JOIN {$this->config['sys.group']} AS sys_group ON (sys_groupaccount.id_sys_group = sys_group.id)
 					WHERE sys_groupaccount.id_sys_account = :id_account
 				");
 
-				foreach($id_accounts as $id_account){
-					
-				}
-
-				$stmt->execute(compact('id_account'));
-
-				$roles = $stmt->fetchAll(\PDO::FETCH_COLUMN);
-				$stmt->closeCursor();
-
-				$stmt = $this->getPdo()->prepare("
-					SELECT
-						  sys_groupaccount.id_sys_group AS id_sys_group
-						, sys_group.id_sys_account AS id_sys_account
-					FROM {$this->config['sys.groupaccount']} AS sys_groupaccount
-						INNER JOIN {$this->config['sys.group']} AS sys_group ON (sys_groupaccount.id_sys_group = sys_group.id)
-					WHERE sys_groupaccount.id_sys_account = :id_account
-				");
-				$stmt->execute([
-					':id_account' => $id_account,
-				]);
-
-				$accgroups = [];
-				while($accgroup = $stmt->fetch(\PDO::FETCH_ASSOC)){
-					if(!in_array($id_accgroup, $id_accgroups)){
-						$id_accgroups[] = $accgroup['id_sys_group'];
-						$accgroups[] = $accgroup;
-					}
-				}
-				$stmt->closeCursor();
-
-				foreach($id_accgroups_new as $id_accgroup){
+				for($i = 0; $i < count($id_accounts); $i++){
+					$stmt_role->execute([
+						'id_account' => $id_accounts[$i],
+					]);
 					$roles = array_merge(
 						  $roles
-						, $this->getDeepRoles($accgroup['id_sys_account'], $id_accgroups)
+						, $stmt_role->fetchAll(\PDO::FETCH_COLUMN)
 					);
+					$stmt_role->closeCursor();
+
+					$stmt_group->execute([
+						'id_account' => $id_accounts[$i],
+					]);
+					while($id_account = $stmt_group->fetch(\PDO::FETCH_COLUMN)){
+						if(!in_array($id_account, $id_accounts)) $id_accounts[] = $id_account;
+					}
+					$stmt_group->closeCursor();
 				}
-
-
-
-
-
-
-				$roles = $this->getDeepRoles($acc['id_sys_account'], $id_accgroups);
 			}
 
 			$acc['roles'] = array_unique($roles);
