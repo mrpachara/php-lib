@@ -102,11 +102,23 @@ if (!function_exists('hash_equals')) {
 		protected $pdoconfigurated;
 		protected $config;
 
-		public function __construct($conf, $pdoconfigurated, $config = array())
-		{
+		public function __construct($conf, $pdoconfigurated, $config = []){
 			$this->conf = $conf;
 			$this->pdoconfigurated = $pdoconfigurated;
 
+			$this->config = array_merge([
+				'account' => 'account',
+				'sys.account' => 'sys.account',
+				'sys.accountrole' => 'sys.accountrole',
+				'sys.client' => 'sys.client',
+				'sys.clientgranttype' => 'sys.clientgranttype',
+				'sys.group' => 'sys.group',
+				'sys.user' => 'sys.user',
+				'auth.accesstoken' => 'auth.accesstoken',
+				'auth.refreshtoken' => 'auth.refreshtoken',
+				'auth.authzcode' => 'auth.authzcode',
+			], $config);
+/*
 			$this->config = array_merge(array(
 				'client_table' => 'oauth_clients',
 				'access_token_table' => 'oauth_access_tokens',
@@ -119,50 +131,51 @@ if (!function_exists('hash_equals')) {
 				'scope_table'  => 'oauth_scopes',
 				'public_key_table'  => 'accclient',
 			), $config);
+*/
 		}
 
 		private function getDeepRoles($id_account, &$id_accgroups){
-			$roles = array();
+			$roles = [];
 
 			if(!empty($id_account)){
 				$stmt = $this->getPdo()->prepare("
 					SELECT
-						  accountrole.role
-					FROM accountrole
-					WHERE accountrole.id_account = :id_account
+						  sys_accountrole.role
+					FROM {$this->config['sys.accountrole']} AS sys_accountrole
+					WHERE sys_accountrole.id_sys_account = :id_account
 				");
-				$stmt->execute(array(
-					 ':id_account' => $id_account
-				));
+				$stmt->execute(compact('id_account'));
 
 				$roles = $stmt->fetchAll(\PDO::FETCH_COLUMN);
 				$stmt->closeCursor();
 
 				$stmt = $this->getPdo()->prepare("
 					SELECT
-						  accgroup.*
-						, account.code AS code
-						, account.name AS name
-					FROM accgroupaccount
-						LEFT JOIN accgroup ON (accgroupaccount.id_accgroup = accgroup.id)
-						LEFT JOIN account ON (accgroup.id_account = account.id)
-					WHERE accgroupaccount.id_account = :id_account
+						  sys_groupaccount.id_sys_group AS id_sys_group
+						, sys_group.id_sys_account AS id_sys_account
+					FROM {$this->config['sys.groupaccount']} AS sys_groupaccount
+						INNER JOIN {$this->config['sys.group']} AS sys_group ON (sys_groupaccount.id_sys_group = sys_group.id)
+					WHERE sys_groupaccount.id_sys_account = :id_account
 				");
-				$stmt->execute(array(
-					  ':id_account' => $id_account
-				));
+				$stmt->execute([
+					':id_account' => $id_account,
+				]);
 
+				$accgroups = [];
 				while($accgroup = $stmt->fetch(\PDO::FETCH_ASSOC)){
-					if(!in_array($accgroup['id'], $id_accgroups)){
-						$id_accgroups[] = $accgroup['id'];
-
-						$roles = array_merge(
-							  $roles
-							, $this->getDeepRoles($accgroup['id_account'], $id_accgroups)
-						);
+					if(!in_array($id_accgroup, $id_accgroups)){
+						$id_accgroups[] = $accgroup['id_sys_group'];
+						$accgroups[] = $accgroup;
 					}
 				}
 				$stmt->closeCursor();
+
+				foreach($id_accgroups_new as $id_accgroup){
+					$roles = array_merge(
+						  $roles
+						, $this->getDeepRoles($accgroup['id_sys_account'], $id_accgroups)
+					);
+				}
 			}
 
 			return $roles;
@@ -171,11 +184,72 @@ if (!function_exists('hash_equals')) {
 		protected function prepareRole(&$acc){
 			if(empty($acc)) return $acc;
 
-			$roles = array();
+			$roles = [];
 
-			if(!empty($acc['id_account'])){
-				$id_accgroups = array();
-				$roles = $this->getDeepRoles($acc['id_account'], $id_accgroups);
+			if(!empty($acc['id_sys_account'])){
+				$id_groups_prepared = [];
+				$id_accounts = [$acc['id_sys_account']];
+				$id_groups = [];
+
+				$stmt_role = $this->getPdo()->prepare("
+					SELECT
+						  sys_accountrole.role
+					FROM {$this->config['sys.accountrole']} AS sys_accountrole
+					WHERE sys_accountrole.id_sys_account = :id_account
+				");
+
+				$stmt_group = $this->getPdo()->prepare("
+					SELECT
+						  sys_groupaccount.id_sys_group AS id_sys_group
+						, sys_group.id_sys_account AS id_sys_account
+					FROM {$this->config['sys.groupaccount']} AS sys_groupaccount
+						INNER JOIN {$this->config['sys.group']} AS sys_group ON (sys_groupaccount.id_sys_group = sys_group.id)
+					WHERE sys_groupaccount.id_sys_account = :id_account
+				");
+
+				foreach($id_accounts as $id_account){
+					
+				}
+
+				$stmt->execute(compact('id_account'));
+
+				$roles = $stmt->fetchAll(\PDO::FETCH_COLUMN);
+				$stmt->closeCursor();
+
+				$stmt = $this->getPdo()->prepare("
+					SELECT
+						  sys_groupaccount.id_sys_group AS id_sys_group
+						, sys_group.id_sys_account AS id_sys_account
+					FROM {$this->config['sys.groupaccount']} AS sys_groupaccount
+						INNER JOIN {$this->config['sys.group']} AS sys_group ON (sys_groupaccount.id_sys_group = sys_group.id)
+					WHERE sys_groupaccount.id_sys_account = :id_account
+				");
+				$stmt->execute([
+					':id_account' => $id_account,
+				]);
+
+				$accgroups = [];
+				while($accgroup = $stmt->fetch(\PDO::FETCH_ASSOC)){
+					if(!in_array($id_accgroup, $id_accgroups)){
+						$id_accgroups[] = $accgroup['id_sys_group'];
+						$accgroups[] = $accgroup;
+					}
+				}
+				$stmt->closeCursor();
+
+				foreach($id_accgroups_new as $id_accgroup){
+					$roles = array_merge(
+						  $roles
+						, $this->getDeepRoles($accgroup['id_sys_account'], $id_accgroups)
+					);
+				}
+
+
+
+
+
+
+				$roles = $this->getDeepRoles($acc['id_sys_account'], $id_accgroups);
 			}
 
 			$acc['roles'] = array_unique($roles);
@@ -188,17 +262,15 @@ if (!function_exists('hash_equals')) {
 		}
 
 		/* OAuth2\Storage\ClientCredentialsInterface */
-		public function checkClientCredentials($client_id, $client_secret = null)
-		{
+		public function checkClientCredentials($client_id, $client_secret = null){
 			$result = $this->getClientDetails($client_id);
 
 			// make this extensible
 			return $result && $result['client_secret'] == $client_secret;
 		}
 
-		public function isPublicClient($client_id)
-		{
-			if (!$result = $this->getClientDetails($client_id)) {
+		public function isPublicClient($client_id){
+			if(!$result = $this->getClientDetails($client_id)){
 				return false;
 			}
 
@@ -206,30 +278,35 @@ if (!function_exists('hash_equals')) {
 		}
 
 		/* OAuth2\Storage\ClientInterface */
-		public function getClientDetails($client_id)
-		{
+		public function getClientDetails($client_id){
 			$stmt = $this->getPdo()->prepare("
 				SELECT
-					  acc_client.code AS client_id
-					, acc_client.name AS client_name
-					, accclient.secret AS client_secret
-					, accclient.id_account AS id_account
-					, CONCAT_WS(' ', (SELECT accclientredirecturi.redirecturi FROM accclientredirecturi WHERE accclientredirecturi.id_accclient = accclient.id)) AS redirect_uri
-					, CONCAT_WS(' ', (SELECT accclientgranttype.granttype FROM accclientgranttype WHERE accclientgranttype.id_accclient = accclient.id)) AS grant_types
-				FROM accclient
-					LEFT JOIN account AS acc_client ON (accclient.id_account = acc_client.id)
+					  account.*
+					, sys_client.*
+					, account.code AS client_id
+					, account.name AS client_name
+					, NULL AS redirect_uri
+					, CONCAT_WS(' ', (
+						SELECT
+							  sys_clientgranttype.granttype
+						FROM {$this->config['sys.clientgranttype']} AS sys_clientgranttype
+						WHERE sys_clientgranttype.id_sys_client = sys_client.id)
+					) AS grant_types
+				FROM {$this->config['sys.client']} AS sys_client
+					INNER JOIN {$this->config['sys.account']} AS sys_account ON (sys_client.id_sys_account = sys_account.id)
+					INNER JOIN {$this->config['account']} AS account ON (sys_account.id_account = account.id)
 				WHERE
-					acc_client.code = :code
+					account.code = :client_id
 				LIMIT 1
 			");
-			$stmt->execute(array(
-				  ':code' => $client_id
-			));
+			$stmt->execute(compact('client_id'));
 
-			if($clientDetails = $stmt->fetch(\PDO::FETCH_ASSOC)){
+			$clientDetails = $stmt->fetch(\PDO::FETCH_ASSOC);
+			$stmt->closeCursor();
+
+			if(!empty($clientDetails)){
 				$this->prepareRole($clientDetails);
-//error_log("clientDetails: ".print_r($clientDetails, true), 3, '/home/pachara/php_error.log');
-				//if(empty($clientDetails['redirect_uri'])) $clientDetails['redirect_uri'] = null;
+				if(empty($clientDetails['redirect_uri'])) $clientDetails['redirect_uri'] = null;
 				if(empty($clientDetails['grant_types'])) $clientDetails['grant_types'] = null;
 				if(!empty($clientDetails['roles'])){
 					$clientDetails['scope'] = implode(' ', $clientDetails['roles']);
@@ -237,13 +314,12 @@ if (!function_exists('hash_equals')) {
 					$clientDetails['scope'] = null;
 				}
 			}
-			$stmt->closeCursor();
 
 			return $clientDetails;
 		}
 
-		public function setClientDetails($client_id, $client_secret = null, $redirect_uri = null, $grant_types = null, $scope = null, $user_id = null)
-		{
+		// TODO: update to new schema
+		public function setClientDetails($client_id, $client_secret = null, $redirect_uri = null, $grant_types = null, $scope = null, $user_id = null){
 			// if it exists, update it.
 			if ($this->getClientDetails($client_id)) {
 				$stmt = $this->getPdo()->prepare($sql = sprintf('UPDATE %s SET client_secret=:client_secret, redirect_uri=:redirect_uri, grant_types=:grant_types, scope=:scope, user_id=:user_id where client_id=:client_id', $this->config['client_table']));
@@ -257,8 +333,7 @@ if (!function_exists('hash_equals')) {
 			return $result;
 		}
 
-		public function checkRestrictedGrantType($client_id, $grant_type)
-		{
+		public function checkRestrictedGrantType($client_id, $grant_type){
 			$details = $this->getClientDetails($client_id);
 			if (isset($details['grant_types'])) {
 				$grant_types = explode(' ', $details['grant_types']);
@@ -270,37 +345,137 @@ if (!function_exists('hash_equals')) {
 			return true;
 		}
 
-		/* OAuth2\Storage\AccessTokenInterface */
-		public function getAccessToken($access_token)
-		{
-			$stmt = $this->getPdo()->prepare(sprintf('SELECT * from %s where access_token = :access_token', $this->config['access_token_table']));
+		private function prepareScope(&$acc){
+			if(empty($acc)) return $acc;
 
-			$token = $stmt->execute(compact('access_token'));
-			if ($token = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+			$scopes = [];
+			if(!empty($acc['id_auth_account'])){
+				$stmt = $this->getPdo()->prepare("
+					SELECT
+						auth_accountscope.scope
+					FROM {$this->config['auth.accountscope']} AS auth_accountscope
+					WHERE auth_accountscope.id_auth_account = :id_auth_account
+				");
+				$stmt->execute([
+					'id_auth_account' => $acc['id_auth_account'],
+				]);
+				$scopes = $stmt->fetchAll(\PDO::FETCH_COLUMN);
+				$stmt->closeCursor();
+			}
+
+			$acc['scope'] = implode(' ', $scopes);
+
+			return $acc;
+		}
+
+		private function updateScope($id_auth_account, $scope){
+			if(!($existedTransaction = $this->getPdo()->inTransaction()) $this->getPdo()->beginTransaction();
+
+			try{
+				$stmt = $this->getPdo()->prepare("
+					DELETE FROM {$this->config['auth.accountscope']} WHERE id_auth_account = :id_auth_account
+				");
+				$stmt->execute([
+					'id_auth_account' => $id_auth_account,
+				]);
+				$stmt->closeCursor();
+
+				$stmt = $this->getPdo()->prepare("
+					INSERT INTO {$this->config['auth.accountscope']} (
+						  id_auth_account
+						, scope
+					) VALUES (
+						  :id_auth_account
+						, :scope
+					)
+				");
+
+				$scopes = explode(' ', $scope);
+				foreach($scopes as $scope){
+					$stmt->execute([
+						'id_auth_account' => $id_auth_account,
+						'scope' => $scope,
+					]);
+				}
+				$stmt->closeCursor();
+			} catch(\PDOException $excp){
+				if(!$existedTransaction) $this->getPdo()->rollBack();
+				throw $excp;
+			}
+
+			return (!$existedTransaction)? $this->getPdo()->commit() : true;
+		}
+
+		/* OAuth2\Storage\AccessTokenInterface */
+		public function getAccessToken($access_token){
+			$stmt = $this->getPdo()->prepare("
+				SELECT
+					  auth_account.*
+					, auth_accesstoken.*
+				FROM {$this->config['auth.accesstoken']} AS auth_accesstoken
+					INNER JOIN {$this->config['auth.account']} AS auth_account ON (auth_accesstoken.id_auth_account = auth_account.id)
+				WHERE auth_account.code = :access_token
+				LIMIT 1
+			");
+
+			$stmt->execute(compact('access_token'));
+			$token = $stmt->fetch(\PDO::FETCH_ASSOC);
+			$stmt->closeCursor();
+
+			if(!empty($token)) {
 				// convert date string back to timestamp
+				$this->prepareScope($token);
+				if(empty($token['scope'])) $token['scope'] = null;
 				$token['expires'] = strtotime($token['expires']);
 			}
-			$stmt->closeCursor();
 
 			return $token;
 		}
 
-		public function setAccessToken($access_token, $client_id, $user_id, $expires, $scope = null)
-		{
-			// convert expires to datestring
-			$expires = date('Y-m-d H:i:s', $expires);
+		public function setAccessToken($access_token, $client_id, $user_id, $expires, $scope = null){
+			if(!($existedTransaction = $this->getPdo()->inTransaction()) $this->getPdo()->beginTransaction();
 
-			// if it exists, update it.
-			if ($this->getAccessToken($access_token)) {
-				$stmt = $this->getPdo()->prepare(sprintf('UPDATE %s SET client_id=:client_id, expires=:expires, user_id=:user_id, scope=:scope where access_token=:access_token', $this->config['access_token_table']));
-			} else {
-				$stmt = $this->getPdo()->prepare(sprintf('INSERT INTO %s (access_token, client_id, expires, user_id, scope) VALUES (:access_token, :client_id, :expires, :user_id, :scope)', $this->config['access_token_table']));
+			try{
+				// convert expires to datestring
+				$expires = date('Y-m-d H:i:s', $expires);
+
+				// if it exists, update it.
+				if($this->getAccessToken($access_token)){
+					$stmt = $this->getPdo()->prepare("
+						UPDATE {$this->config['auth.account']}
+						SET
+							  client_id=:client_id
+							, expires=:expires
+							, user_id=:user_id
+						WHERE code = :access_token
+					");
+				} else{
+					$stmt = $this->getPdo()->prepare("
+						INSERT INTO {$this->config['auth.account']} (
+							  code
+							, client_id
+							, expires
+							, user_id
+						) VALUES (
+							  :access_token
+							, :client_id
+							, :expires
+							, :user_id
+						)
+					");
+				}
+
+				$stmt->execute(compact('access_token', 'client_id', 'user_id', 'expires', 'scope'));
+				$stmt->closeCursor();
+
+				$accesstoken = $this->getAccessToken($access_token);
+				$this->updateScope($accesstoken['id_auth_account'], $scope);
+			} catch(\PDOException $excp){
+				if(!$existedTransaction) $this->getPdo()->rollBack();
+				return false;
 			}
 
-			$result = $stmt->execute(compact('access_token', 'client_id', 'user_id', 'expires', 'scope'));
-			$stmt->closeCursor();
-
-			return $result;
+			return (!$existedTransaction)? $this->getPdo()->commit() : true;
 		}
 
 		/* OAuth2\Storage\AuthorizationCodeInterface */
