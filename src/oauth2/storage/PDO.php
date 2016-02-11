@@ -113,6 +113,7 @@ if (!function_exists('hash_equals')) {
 				'sys.client' => 'sys.client',
 				'sys.clientgranttype' => 'sys.clientgranttype',
 				'sys.group' => 'sys.group',
+				'sys.groupaccount' => 'sys.groupaccount',
 				'sys.user' => 'sys.user',
 				'auth.account' => 'auth.account',
 				'auth.accountscope' => 'auth.accountscope',
@@ -298,7 +299,7 @@ if (!function_exists('hash_equals')) {
 		}
 
 		private function updateScope($id_auth_account, $scope){
-			if(!($existedTransaction = $this->getPdo()->inTransaction()) $this->getPdo()->beginTransaction();
+			$this->getPdo()->beginTransaction();
 
 			try{
 				$stmt = $this->getPdo()->prepare("
@@ -328,11 +329,12 @@ if (!function_exists('hash_equals')) {
 				}
 				$stmt->closeCursor();
 			} catch(\PDOException $excp){
-				if(!$existedTransaction) $this->getPdo()->rollBack();
+				$this->getPdo()->rollBack();
+				//return false;
 				throw $excp;
 			}
 
-			return (!$existedTransaction)? $this->getPdo()->commit() : true;
+			return $this->getPdo()->commit();
 		}
 
 		/* OAuth2\Storage\AccessTokenInterface */
@@ -341,6 +343,7 @@ if (!function_exists('hash_equals')) {
 				SELECT
 					  auth_account.*
 					, auth_accesstoken.*
+					, auth_account.code AS access_token
 				FROM {$this->config['auth.accesstoken']} AS auth_accesstoken
 					INNER JOIN {$this->config['auth.account']} AS auth_account ON (auth_accesstoken.id_auth_account = auth_account.id)
 				WHERE auth_account.code = :access_token
@@ -362,7 +365,7 @@ if (!function_exists('hash_equals')) {
 		}
 
 		public function setAccessToken($access_token, $client_id, $user_id, $expires, $scope = null){
-			if(!($existedTransaction = $this->getPdo()->inTransaction()) $this->getPdo()->beginTransaction();
+			$this->getPdo()->beginTransaction();
 
 			try{
 				// convert expires to datestring
@@ -401,7 +404,7 @@ if (!function_exists('hash_equals')) {
 					$stmt = $this->getPdo()->prepare("
 						INSERT INTO {$this->config['auth.accesstoken']} (
 							  id_auth_account
-						) VALUE (
+						) VALUES (
 							  :id_auth_account
 						)
 					");
@@ -415,25 +418,38 @@ if (!function_exists('hash_equals')) {
 				$token = $this->getAccessToken($access_token);
 				$this->updateScope($token['id_auth_account'], $scope);
 			} catch(\PDOException $excp){
-				if(!$existedTransaction) $this->getPdo()->rollBack();
-				return false;
+				$this->getPdo()->rollBack();
+				//return false;
+				throw $excp;
 			}
 
-			return (!$existedTransaction)? $this->getPdo()->commit() : true;
+			return $this->getPdo()->commit();
 		}
 
-		// TODO: change to use new schema
 		/* OAuth2\Storage\AuthorizationCodeInterface */
-		public function getAuthorizationCode($code)
-		{
-			$stmt = $this->getPdo()->prepare(sprintf('SELECT * from %s where authorization_code = :code', $this->config['code_table']));
+		public function getAuthorizationCode($code){
+			$stmt = $this->getPdo()->prepare("
+				SELECT
+					  auth_account.*
+					, auth_authzcode.*
+					, auth_account.code AS authorization_code
+				FROM {$this->config['auth.authzcode']} AS auth_authzcode
+					INNER JOIN {$this->config['auth.account']} AS auth_account ON (auth_authzcode.id_auth_account = auth_account.id)
+				WHERE
+					auth_account.code = :code
+				LIMIT 1
+			");
 			$stmt->execute(compact('code'));
 
-			if ($code = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-				// convert date string back to timestamp
-				$code['expires'] = strtotime($code['expires']);
-			}
+			$token = $stmt->fetch(\PDO::FETCH_ASSOC);
 			$stmt->closeCursor();
+
+			if(!empty($token)) {
+				$this->prepareScope($token);
+				if(empty($token['scope'])) $token['scope'] = null;
+				// convert date string back to timestamp
+				$token['expires'] = strtotime($token['expires']);
+			}
 
 			return $code;
 		}
@@ -480,7 +496,7 @@ if (!function_exists('hash_equals')) {
 		}
 
 		public function expireAuthorizationCode($code){
-			if(!($existedTransaction = $this->getPdo()->inTransaction()) $this->getPdo()->beginTransaction();
+			$this->getPdo()->beginTransaction();
 
 			try{
 				$stmt = $this->getPdo()->prepare("
@@ -491,11 +507,11 @@ if (!function_exists('hash_equals')) {
 				$stmt->execute(compact('code'));
 				$stmt->closeCursor();
 			} catch(\PDOException $excp){
-				if(!$existedTransaction) $this->rollBack();
+				$this->rollBack();
 				return false;
 			}
 
-			return (!$existedTransaction)? $this->getPdo()->commit() : true;
+			return $this->getPdo()->commit();
 		}
 
 		/* OAuth2\Storage\UserCredentialsInterface */
@@ -555,7 +571,8 @@ if (!function_exists('hash_equals')) {
 			$stmt = $this->getPdo()->prepare("
 				SELECT
 					  auth_account.*
-					, auth_refreshtoke.*
+					, auth_refreshtoken.*
+					, auth_account.code AS refresh_token
 				FROM {$this->config['auth.refreshtoken']} AS auth_refreshtoken
 					INNER JOIN {$this->config['auth.account']} AS auth_account ON (auth_refreshtoken.id_auth_account = auth_account.id)
 				WHERE auth_account.code = :refresh_token
@@ -572,13 +589,12 @@ if (!function_exists('hash_equals')) {
 				// convert expires to epoch time
 				$token['expires'] = strtotime($token['expires']);
 			}
-			$stmt->closeCursor();
 
 			return $token;
 		}
 
 		public function setRefreshToken($refresh_token, $client_id, $user_id, $expires, $scope = null){
-			if(!($existedTransaction = $this->getPdo()->inTransaction()) $this->getPdo()->beginTransaction();
+			$this->getPdo()->beginTransaction();
 
 			try{
 				// convert expires to datestring
@@ -588,24 +604,24 @@ if (!function_exists('hash_equals')) {
 					INSERT INTO {$this->config['auth.account']} (
 							code
 						, client_id
-						, expires
 						, user_id
+						, expires
 					) VALUES (
-							:reresh_token
+							:refresh_token
 						, :client_id
-						, :expires
 						, :user_id
+						, :expires
 					)
 				");
 
-				$stmt->execute(compact('reresh_token', 'client_id', 'user_id', 'expires'));
+				$stmt->execute(compact('refresh_token', 'client_id', 'user_id', 'expires'));
 				$stmt->closeCursor();
 
 				if($id_auth_account = $this->getPdo()->lastInsertId($this->config['auth.account'].'_id_seq')){
 					$stmt = $this->getPdo()->prepare("
 						INSERT INTO {$this->config['auth.refreshtoken']} (
 							  id_auth_account
-						) VALUE (
+						) VALUES (
 							  :id_auth_account
 						)
 					");
@@ -619,15 +635,16 @@ if (!function_exists('hash_equals')) {
 				$token = $this->getRefreshToken($refresh_token);
 				$this->updateScope($token['id_auth_account'], $scope);
 			} catch(\PDOException $excp){
-				if(!$existedTransaction) $this->getPdo()->rollBack();
-				return false;
+				$this->getPdo()->rollBack();
+				//return false;
+				throw $excp;
 			}
 
-			return (!$existedTransaction)? $this->getPdo()->commit() : true;
+			return $this->getPdo()->commit();
 		}
 
 		public function unsetRefreshToken($refresh_token){
-			if(!($existedTransaction = $this->getPdo()->inTransaction()) $this->getPdo()->beginTransaction();
+			$this->getPdo()->beginTransaction();
 
 			try{
 				$stmt = $this->getPdo()->prepare("
@@ -638,11 +655,12 @@ if (!function_exists('hash_equals')) {
 				$stmt->execute(compact('refresh_token'));
 				$stmt->closeCursor();
 			} catch(\PDOException $excp){
-				if(!$existedTransaction) $this->getPdo()->rollBack();
-				return false;
+				$this->getPdo()->rollBack();
+				//return false;
+				throw $excp;
 			}
 
-			return (!$existedTransaction)? $this->getPdo()->commit() : true;
+			return $this->getPdo()->commit();
 		}
 
 		protected function checkPassword($user, $password){
@@ -653,11 +671,13 @@ if (!function_exists('hash_equals')) {
 			$stmt = $this->getPdo()->prepare("
 				SELECT
 					  account.*
+					, sys_account.*
 					, sys_user.*
 					, account.code AS username
 					, account.name AS name
 				FROM {$this->config['sys.user']} AS sys_user
-					INNER JOIN {$this->config['account']} AS account ON (auth_user.id_account = account.id)
+					INNER JOIN {$this->config['sys.account']} AS sys_account ON (sys_user.id_sys_account = sys_account.id)
+					INNER JOIN {$this->config['account']} AS account ON (sys_account.id_account = account.id)
 				WHERE
 					account.code = :username
 				LIMIT 1

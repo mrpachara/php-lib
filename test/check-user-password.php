@@ -2,7 +2,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>User Create Password</title>
+		<title>Check User Password</title>
 		<style type="text/css">
 html,
 body {
@@ -25,19 +25,32 @@ body {
 	display: flex;
 	flex-direction: column;
 }
+
+#cp-form .cl-flex {
+	flex: 1;
+}
+
+#cp-form>label {
+	display: flex;
+	flex-direction: row;
+}
 		</style>
 	</head>
 	<body>
-		<form id="cp-form" action="user-create-password_submit.php" method="post">
+		<form id="cp-form" action="check-user-password_submit.php" method="post">
 			<label>
 				<span>Username</span>
+				<span class="cl-flex"></span>
 				<input type="text" name="username" />
 			</label>
 			<label>
 				<span>Password</span>
+				<span class="cl-flex"></span>
 				<input type="text" name="password" />
 			</label>
-			<button type="submit">Update</button>
+			<div style="text-align: center;">
+				<button type="submit">Check</button>
+			</div>
 		</form>
 	</body>
 </html>

@@ -2,7 +2,9 @@
 	namespace sys;
 
 	class PDO extends \PDO{
-		public static function prepareIn($key, $values, &$param = array()){
+		const SAVEPOINT_PREFIX = '__savepoint__';
+
+		public static function prepareIn($key, $values, &$param = []){
 			$keys = array();
 
 			$param = (array)$param;
@@ -15,6 +17,34 @@
 			$in_clause = implode(', ', $keys);
 
 			return (empty($in_clause))? 'NULL' : $in_clause;
+		}
+
+		private $transactionCounter = 0;
+
+		public function beginTransaction(){
+				if(!$this->transactionCounter++){
+						return parent::beginTransaction();
+				}
+
+				$this->exec('SAVEPOINT '.static::SAVEPOINT_PREFIX.$this->transactionCounter);
+				return $this->transactionCounter >= 0;
+		}
+
+		public function commit(){
+				if(!--$this->transactionCounter){
+						return parent::commit();
+				}
+
+				return $this->transactionCounter >= 0;
+		}
+
+		public function rollback(){
+				if(--$this->transactionCounter){
+						$this->exec('ROLLBACK TO '.static::SAVEPOINT_PREFIX.$this->transactionCounter + 1);
+						return true;
+				}
+
+				return parent::rollback();
 		}
 
 		public function getJsDate($field, $withOutSec = false){

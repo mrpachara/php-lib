@@ -288,8 +288,8 @@
 				return call_user_func_array(array($this, $method), $args);
 			} else if(static::isPrefix('save', $method) || static::isPrefix('delete', $method) || static::isPrefix('update', $method)){
 				$result = null;
-				$existedTransaction = $this->getPdo()->inTransaction();
-				if(!$existedTransaction) $this->getPdo()->beginTransaction();
+
+				$this->getPdo()->beginTransaction();
 				try{
 					$sqlStatement['forupdate'] = 'FOR UPDATE';
 					$get = 'get';
@@ -316,10 +316,10 @@
 					//$result = (static::isPrefix('delete', $method))? $this->$method($existedData) : $this->$method($existedData, $args[1]);
 					$result = call_user_func_array(array($this, $method), $args);
 				} catch(\PDOException $excp){
-					if(!$existedTransaction) $this->getPdo()->rollBack();
+					$this->getPdo()->rollBack();
 					throw $excp;
 				}
-				return (!$existedTransaction)? (($this->getPdo()->commit())? $result : false) : $result;
+				return ($this->getPdo()->commit())? $result : false;
 			} else{
 				throw new \sys\DataServiceException("%s unknow {$method} method", 400);
 			}
