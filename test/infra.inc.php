@@ -38,4 +38,9 @@
 		],
 		'specialroles' => ['ADMIN'],
 	];
+
+	$infra['rest'] = [
+		'path' => 'rest-modules/',
+		'base' => 'rest/',
+	];
 ?>

@@ -28,7 +28,7 @@
 		}
 
 		public function links($rel){
-			$links = array();
+			$links = [];
 
 			if(empty($this->config['links'])) return $links;
 
@@ -40,7 +40,7 @@
 		}
 
 		protected function prepareData(&$data){
-			if(!isset($data['links'])) $data['links'] = array();
+			if(!isset($data['links'])) $data['links'] = [];
 			$data['links'] = (array)$data['links'];
 		}
 
@@ -77,4 +77,4 @@
 			return true;
 		}
 	}
- ?>
+?>

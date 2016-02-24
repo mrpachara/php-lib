@@ -13,73 +13,6 @@
 			}, $value);
 		}
 
-		protected static function safeUpdate($pdo, $stmts, $criteria, $deleteSql, $datas, $fields = null){
-			$stmts['existed']->execute($criteria);
-			$existedIds = $stmts['existed']->fetchAll(\PDO::FETCH_COLUMN);
-			$stmts['existed']->closeCursor();
-
-			/* prepare insertData and updateData */
-			$insertData = [];
-			$updateData = [];
-			$keepIds = [];
-			foreach($datas as $data){
-				if(!empty($data['id']) && in_array($data['id'], $existedIds)){
-					$updateData[] = $data;
-					$keepIds[] = $data['id'];
-				} else{
-					$insertData[] = $data;
-				}
-			}
-
-			/* delete existed data */
-			$inParams = [];
-			$undeleteSql = "AND (id NOT IN (".\sys\PDO::prepareIn(':_undeleted_', $keepIds, $inParams)."))";
-			$stmt = $pdo->prepare(sprintf($deleteSql, (empty($inParams))? "" : $undeleteSql));
-			$stmt->execute(array_merge($criteria, $inParams));
-			$stmt->closeCursor();
-
-			$fields_update = null;
-			$fields_insert = null;
-			if(is_array($fields)){
-				if(array_key_exists('update', $fields)){
-					$fields_update = $fields['update'];
-				}
-				if(array_key_exists('insert', $fields)){
-					$fields_insert = $fields['insert'];
-				}
-			}
-
-			/* update data before insert to prevent conflict constrain */
-			$driver = $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
-			$tryUpdateData = $updateData;
-			$lastLength = count($tryUpdateData) + 1;
-			$lastExcp = null;
-			while(count($tryUpdateData) > 0){
-				if($lastLength == count($tryUpdateData)) throw $lastExcp;
-				$nextUpdateData = [];
-				$lastLength = count($tryUpdateData);
-				foreach($tryUpdateData as $data){
-					if($driver == 'pgsql') $pdo->query("SAVEPOINT tryupdate_child_data_if_avaliable");
-					try{
-						$stmts['update']->execute(($fields_update !== null)? array_intersect_key($data, array_flip($fields_update)) : $data);
-					} catch(\PDOException $excp){
-						$lastExcp = $excp;
-						$nextUpdateData[] = $data;
-						if($driver == 'pgsql') $pdo->query("ROLLBACK TO SAVEPOINT tryupdate_child_data_if_avaliable");
-					}
-					if($driver == 'pgsql') $pdo->query("RELEASE SAVEPOINT tryupdate_child_data_if_avaliable");
-					$stmts['update']->closeCursor();
-					$tryUpdateData = $nextUpdateData;
-				}
-			}
-
-			/* insert data */
-			foreach($insertData as $data){
-				$stmts['insert']->execute(($fields_insert !== null)? array_intersect_key($data, array_flip($fields_insert)) : $data);
-				$stmts['insert']->closeCursor();
-			}
-		}
-
 		public static function isPrefix($prefix, $value){
 			$prefix = static::addDash($prefix).'-';
 			$value = static::addDash($value).'-';
@@ -88,10 +21,10 @@
 		}
 
 		protected function createSearchTerm($termText){
-			$searchTerm = array(
-				  'terms' => array()
-				, 'specials' => array()
-			);
+			$searchTerm = [
+				'terms' => [],
+				'specials' => [],
+			];
 
 			if(empty($termText)) return $searchTerm;
 
@@ -101,7 +34,7 @@
 				if(count($termSplited) == 1){
 					$searchTerm['terms'][] = $term;
 				} else{
-					if(empty($searchTerm['specials'][$termSplited[0]])) $searchTerm['specials'][$termSplited[0]] = array();
+					if(empty($searchTerm['specials'][$termSplited[0]])) $searchTerm['specials'][$termSplited[0]] = [];
 
 					$searchTerm['specials'][$termSplited[0]][] = $termSplited[1];
 				}
@@ -111,47 +44,50 @@
 		}
 
 		protected function initSqlStatement(){
-			$sqlStatement = array(
-				  'sqls' => array()
-				, 'params' => array()
-				, 'forupdate' => ''
-				, 'limit' => ''
-			);
+			$sqlStatement = [
+				'sqls' => [],
+				'params' => [],
+				'limit' => '',
+			];
 
 			return $sqlStatement;
 		}
 
 		protected function extendWhereSearchSpecial($searchTerm, &$existedSqlStatement = null){
-			$where = array(
-				  'sqls' => array()
-				, 'params' => array()
-			);
+			$where = [
+				'sqls' => [],
+				'params' => [],
+			];
 
 			$existedSqlStatement = array_merge_recursive((array)$existedSqlStatement, $where);
 
 			return $where;
 		}
 
+		// TODO: implement with Full Text Search
 		protected function extendWhereSearchTerm($searchTerm, $searchableFields, &$existedSqlStatement = null){
-			$where = array(
-				  'sqls' => array()
-				, 'params' => array()
-			);
+			$where = [
+				'sqls' => [],
+				'params' => [],
+			];
 
 			if(empty($searchableFields) || empty($searchTerm['terms'])) return $where;
 
 			$concatFn = "concat_ws('".static::SEARCH_DELIMITER."', ".implode(', ', $searchableFields).")";
 
+			$like_keyword = 'LIKE';
+			switch($this->getPdo()->getAttribute(\PDO::ATTR_DRIVER_NAME)){
+				case 'pgsql':
+					$like_keyword = 'ILIKE';
+					break;
+				default:
+					$like_keyword = 'LIKE';
+			}
+
 			for($i = 0; $i < count($searchTerm['terms']); $i++){
 				$term = $searchTerm['terms'][$i];
 				$paramName = ":_term_".$i;
-				switch($this->getPdo()->getAttribute(\PDO::ATTR_DRIVER_NAME)){
-					case 'pgsql':
-						$where['sqls'][] = "({$concatFn} ILIKE {$paramName})";
-						break;
-					default:
-						$where['sqls'][] = "({$concatFn} LIKE {$paramName})";
-				}
+				$where['sqls'][] = "({$concatFn} {$like_keyword} {$paramName})";
 				$where['params'][$paramName] = "%{$term}%";
 			}
 
@@ -161,10 +97,10 @@
 		}
 
 		protected function extendWhereQuery($queries, $keyMap, &$existedSqlStatement = null){
-			$where = array(
-				  'sqls' => array()
-				, 'params' => array()
-			);
+			$where = [
+				'sqls' => [],
+				'params' => [],
+			];
 
 			$keyMap = (array)$keyMap;
 
@@ -172,10 +108,10 @@
 				if(array_key_exists($key, $keyMap) && !empty($query)){
 					$where['sqls'][] = "({$keyMap[$key]} IN (".PDO::prepareIn(":_query_{$key}", $query, $where['params'])."))";
 				} else{
-					$where = array(
-						  'sqls' => array('FALSE')
-						, 'params' => array()
-					);
+					$where = [
+						'sqls' => ['FALSE'],
+						'params' => [],
+					];
 					break;
 				}
 			}
@@ -202,13 +138,13 @@
 
 			$limitSql = "LIMIT {$limit} OFFSET {$offset}";
 
-			$page = array(
-				  'current' => $sql_page + 1
-				, 'previous' => ($sql_page > 0)? $sql_page : null
-				, 'next' => $sql_page + 2
-				, 'total' => null
-				, 'limit' => $sql_limit
-			);
+			$page = [
+				'current' => $sql_page + 1,
+				'previous' => ($sql_page > 0)? $sql_page : null,
+				'next' => $sql_page + 2,
+				'total' => null,
+				'limit' => $sql_limit,
+			];
 
 			$existedSqlStatement = (array)$existedSqlStatement;
 			$existedSqlStatement['limit'] = $limitSql;
@@ -216,6 +152,74 @@
 			return $limitSql;
 		}
 
+		protected function safeUpdate($stmts, $criteria, $deleteSql, $datas, $fields = null){
+			$stmts['existed']->execute($criteria);
+			$existedIds = $stmts['existed']->fetchAll(\PDO::FETCH_COLUMN);
+			$stmts['existed']->closeCursor();
+
+			/* prepare insertData and updateData */
+			$insertData = [];
+			$updateData = [];
+			$keepIds = [];
+			foreach($datas as $data){
+				if(!empty($data['id']) && in_array($data['id'], $existedIds)){
+					$updateData[] = $data;
+					$keepIds[] = $data['id'];
+				} else{
+					$insertData[] = $data;
+				}
+			}
+
+			/* delete existed data */
+			$inParams = [];
+			$undeleteSql = "AND (id NOT IN (".\sys\PDO::prepareIn(':_undeleted_', $keepIds, $inParams)."))";
+			$stmt = $this->getPdo()->prepare(sprintf($deleteSql, (empty($inParams))? "" : $undeleteSql));
+			$stmt->execute(array_merge($criteria, $inParams));
+			$stmt->closeCursor();
+
+			$fields_update = null;
+			$fields_insert = null;
+			if(is_array($fields)){
+				if(array_key_exists('update', $fields)){
+					$fields_update = $fields['update'];
+				}
+				if(array_key_exists('insert', $fields)){
+					$fields_insert = $fields['insert'];
+				}
+			}
+
+			/* update data before insert to prevent conflict constrain */
+			$driver = $this->getPdo()->getAttribute(\PDO::ATTR_DRIVER_NAME);
+			$tryUpdateData = $updateData;
+			$lastLength = count($tryUpdateData) + 1;
+			$lastExcp = null;
+			while(count($tryUpdateData) > 0){
+				if($lastLength == count($tryUpdateData)) throw $lastExcp;
+				$nextUpdateData = [];
+				$lastLength = count($tryUpdateData);
+				foreach($tryUpdateData as $data){
+					if($driver == 'pgsql') $this->getPdo()->query("SAVEPOINT tryupdate_child_data_if_avaliable");
+					try{
+						$stmts['update']->execute(($fields_update !== null)? array_intersect_key($data, array_flip($fields_update)) : $data);
+					} catch(\PDOException $excp){
+						$lastExcp = $excp;
+						$nextUpdateData[] = $data;
+						if($driver == 'pgsql') $this->getPdo()->query("ROLLBACK TO SAVEPOINT tryupdate_child_data_if_avaliable");
+					}
+					if($driver == 'pgsql') $this->getPdo()->query("RELEASE SAVEPOINT tryupdate_child_data_if_avaliable");
+					$stmts['update']->closeCursor();
+					$tryUpdateData = $nextUpdateData;
+				}
+			}
+
+			/* insert data */
+			foreach($insertData as $data){
+				$stmts['insert']->execute(($fields_insert !== null)? array_intersect_key($data, array_flip($fields_insert)) : $data);
+				$stmts['insert']->closeCursor();
+			}
+		}
+
+		// INFO: May be overrided
 		protected function prepareEntity(&$data){
 			return;
 		}
@@ -291,7 +295,6 @@
 
 				$this->getPdo()->beginTransaction();
 				try{
-					$sqlStatement['forupdate'] = 'FOR UPDATE';
 					$get = 'get';
 					if(array_key_exists($method, static::ANNO_EXISTEDMETHOD_MAP)){
 						$get = static::ANNO_EXISTEDMETHOD_MAP[$method];

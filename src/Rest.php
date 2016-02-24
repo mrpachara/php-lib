@@ -22,11 +22,11 @@
 		}
 
 		public static function parseContentType($str){
-			$contentType = array(
-				 'origin' => $str
-				,'type' => null
-				,'params' => null
-			);
+			$contentType = [
+				'origin' => $str,
+				'type' => null,
+				'params' => null,
+			];
 
 			if(!empty($str)){
 				$contentTypes = explode(';', strtolower(str_replace(' ', '', $str)), 2);
@@ -66,8 +66,8 @@
 		}
 
 		public static function getResponseNegotiation(){
-			$acceptList = array();
-			$sortKey = array();
+			$acceptList = [];
+			$sortKey = [];
 
 			if(isset($_SERVER['HTTP_ACCEPT'])){
 				$httpAccepts = explode(',', strtolower(str_replace(' ', '', $_SERVER['HTTP_ACCEPT'])));
@@ -131,7 +131,7 @@
 
 			$negotiationContentTypes = static::getResponseNegotiation();
 			if(!empty($contentTypesStrs)){
-				$contentTypes = array();
+				$contentTypes = [];
 				foreach((array)$contentTypesStrs as $contentTypesStr){
 					$contentTypes[] = static::parseContentType($contentTypesStr);
 				}
@@ -197,11 +197,11 @@
 						*/
 						}
 
-						$error = array(
-							 'code' => $error->getCode()
-							,'message' => $error->getMessage()
-							,'exception' => $error->__toString()
-						);
+						$error = [
+							'code' => $error->getCode(),
+							'message' => $error->getMessage(),
+							'exception' => $error->__toString(),
+						];
 
 						// TODO: less info for debug == 0
 						/*
@@ -216,12 +216,12 @@
 
 				$bestContentTypeStr = $forceType;
 				if($bestContentTypeStr === null){
-					$bestContentTypeStr = static::getBestContentType(array(
-						 'application/json; charset=utf-8'
-						,'application/x-www-form-urlencoded'
-						,'application/xhtml+xml; charset=utf-8'
-						,'text/html; charset=utf-8'
-					), true);
+					$bestContentTypeStr = static::getBestContentType([
+						'application/json; charset=utf-8',
+						'application/x-www-form-urlencoded',
+						'application/xhtml+xml; charset=utf-8',
+						'text/html; charset=utf-8',
+					], true);
 				}
 
 				header(static::CONTENTYPE_TYPE_PROPERTY_NAME.": {$bestContentTypeStr}");
@@ -265,21 +265,21 @@
 		private $restPath = null;
 		private $method = null;
 
-		private $query = array();
+		private $query = [];
 		private $fragment = null;
 
-		private $arguments = array();
+		private $arguments = [];
 
 		private $module = null;
 		private $service = null;
 
 		private $responseContentType = null;
 
-		private $contentType = array(
-			 'origin' => null
-			,'type' => null
-			,'params' => null
-		);
+		private $contentType = [
+			'origin' => null,
+			'type' => null,
+			'params' => null,
+		];
 
 		private $content = null;
 
@@ -382,7 +382,7 @@
 		}
 
 		public function bind($names = null){
-			$map = array();
+			$map = [];
 
 			if(!empty($names)){
 				$names = (array)$names;
