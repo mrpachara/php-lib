@@ -13,7 +13,6 @@
 			$options = [
 				'term' => (!empty($_GET['term']))? $_GET['term'] : null,
 				'page' => (!empty($_GET['page']))? $_GET['page'] : null,
-				'queries' => (!empty($_GET['queries']))? json_decode($_GET['queries'], true) : null,
 			];
 			$data['items'] = $_service->getAll($options);
 			$config->addNewLinks($data, [

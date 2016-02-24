@@ -17,6 +17,16 @@
 			return (isset($this->config[$prop]))? $this->config[$prop] : null;
 		}
 
+		public function props($rel, $prop){
+			$deps = [];
+
+			foreach($this->links($rel) as $link){
+				if(isset($link[$prop])) $deps[] = $link[$prop];
+			}
+
+			return $deps;
+		}
+
 		public function link($uri){
 			if(empty($this->config['links'])) return null;
 
@@ -68,6 +78,7 @@
 			return (count($links) > 0);
 		}
 
+/*
 		public function addNewLinks(&$data, $links){
 			$this->prepareData($data);
 
@@ -76,5 +87,6 @@
 
 			return true;
 		}
+*/
 	}
 ?>
