@@ -8,108 +8,104 @@
 		'uri' => $GLOBALS['_rest']->getRestUri(),
 	];
 
-	if($GLOBALS['_rest']->getMethod() == 'GET'){
-		if($GLOBALS['_rest']->getArgument(0) === null){
-			$options = [
-				'term' => (!empty($_GET['term']))? $_GET['term'] : null,
-				'page' => (!empty($_GET['page']))? $_GET['page'] : null,
-			];
-			$data['items'] = $_service->getAll($options);
-			$config->addNewLinks($data, [
-				[
-					'href' => $GLOBALS['_rest']->getServicePath('{{item.id}}'),
-					'rel' => 'action', 'alias' => 'view',
-					'link' => "recruitItem({id: item.id})",
-					'title' => 'View', 'icon' => 'action:ic-pageview',
-				],
-			]);
-			if($GLOBALS['_grantservice']->authoz('EDUSERVICES_MANAGER')){
-				$config->addNewLinks($data, [
-					[
-						'href' => $GLOBALS['_rest']->getServicePath($_service::NEWPARAM),
-						'rel' => 'global-action', 'alias' => 'new',
-						'link' => "recruitItem({id: '".$_service::NEWPARAM."'})",
-						'title' => 'New', 'icon' => 'content:ic-add'
-					],
-				]);
-			}
-			if(is_array($options['page'])) $data['page'] = $options['page'];
-		} else{
-			if($GLOBALS['_rest']->getArgument(0) != $_service::NEWPARAM){
-				$data['item'] = $_service->get($GLOBALS['_rest']->getArgument(0));
-				if($GLOBALS['_grantservice']->authoz('EDUSERVICES_MANAGER')){
-					if($data['item']['_updatable']) $config->addNewLinks($data, [
-						[
-							'href' => $GLOBALS['_rest']->getServicePath($GLOBALS['_rest']->getArgument(0)),
-							'rel' => 'action', 'alias' => 'save', 'method' => 'put',
-							'title' => 'Edit', 'icon' => 'editor:ic-mode-edit',
-						],
-					]);
-					if($data['item']['_deletable']) $config->addNewLinks($data, [
-						[
-							'href' => $GLOBALS['_rest']->getServicePath($GLOBALS['_rest']->getArgument(0)),
-							'rel' => 'action',  'alias' => 'delete', 'method' => 'delete',
-							'title' => 'Delete', 'icon' => 'action:ic-delete', 'class' => 'warn',
-						],
-					]);
-				}
-			} else{
-				$data['item'] = $_service->get(null);
-				if($GLOBALS['_grantservice']->authoz('EDUSERVICES_MANAGER')){
-					$config->addNewLinks($data, [
-						[
-							'href' => $GLOBALS['_rest']->getServicePath(),
-							'rel' => 'action',  'alias' => 'save', 'method' => 'put',
-							'title' => 'Create', 'icon' => 'content:ic-save',
-						],
-					]);
-				}
-			}
+	$reqParams = $GLOBALS['_rest']->bind(['id']);
+
+/*
+=================================================
+	Call directly to service
+=================================================
+*/
+	if($reqParams['id'] === null){
+		if($GLOBALS['_rest']->isMethod(['GET', 'POST'])){
+			$options = ($GLOBALS['_rest']->isMethod('GET'))?
+				$GLOBALS['_rest']->getQuery() : $GLOBALS['_rest']->getContent();
+
+			$data['self'] = $_service->getAll($options);
 
 			$config->addNewLinks($data, [
 				[
-					'rel' => 'domain', 'href' => $config->getLinkModulePath('applicationtemplate').'applicationtemplate-domain', 'alias' => 'applicationtemplate-domain',
-					'from' => 'applicationtemplate', 'for' => 'applicationtemplate',
-				],
-				[
-					'rel' => 'domain', 'href' => $config->getLinkModulePath('recruitpayment').'recruitpayment-domain', 'alias' => 'recruitpayment-domain',
-					'from' => 'recruitpayment', 'for' => 'recruitpayment',
-				],
-				[
-					'rel' => 'domain', 'href' => $config->getLinkModulePath('recruitexamcard').'recruitexamcard-domain', 'alias' => 'recruitexamcard-domain',
-					'from' => 'recruitexamcard', 'for' => 'recruitexamcard',
-				],
-				[
-					'rel' => 'domain', 'href' => $config->getLinkModulePath('recruitapplicationverify').'recruitapplicationverify-domain', 'alias' => 'recruitapplicationverify-domain',
-					'from' => 'recruitapplicationverify', 'for' => 'recruitapplicationverify',
-				],
-				[
-					'rel' => 'domain', 'href' => $config->getLinkModulePath('curriculum').'curriculum-domain', 'alias' => 'curriculum-domain',
-					'from' => 'curriculum', 'for' => 'recruitapplications.curriculum',
-				],
-				[
-					'rel' => 'domain', 'href' => $config->getLinkModulePath('applicationquestionaire').'applicationquestionaire-domain', 'alias' => 'applicationquestionaire-domain',
-					'from' => 'applicationquestionaire', 'for' => 'recruitapplications.recruitapplicationquestionaires.applicationquestionaire',
+					'href' => $GLOBALS['_rest']->getServicePath('{{ id }}'),
+					'rel' => 'action', 'alias' => 'view',
+					'link' => "data01Item({id: item.id})",
+					'title' => 'View', 'icon' => 'action:ic-pageview',
 				],
 			]);
+			if($GLOBALS['_grantservice']->authoz('ADMIN')){
+				$config->addNewLinks($data, [
+					[
+						'href' => $GLOBALS['_rest']->getServicePath($_service::NEWPARAM),
+						'rel' => 'action/global', 'alias' => 'new',
+						'link' => "data01Item({id: '".$_service::NEWPARAM."'})",
+						'title' => 'New', 'icon' => 'content:ic-add',
+					],
+				]);
+			}
+			//if(is_array($options['page'])) $data['page'] = $options['page'];
+		} else if($GLOBALS['_rest']->isMethod('PUT')){
+			$GLOBALS['_grantservice']->authozExcp('ADMIN')
+			$data['uri'] = $GLOBALS['_rest']->getServicePath(
+				$_service->save(null, $GLOBALS['_rest']->getContent(), $GLOBALS['_grantservice']->getUsername())
+			);
+			$data['replace'] = $GLOBALS['_rest']->getServicePath($_service::NEWPARAM);
+			$data['status'] = 'created';
+			$data['info'] = $data['uri']." was created";
+		} else{
+			throw new \sys\HttpMethodNotAllowedException();
 		}
+/*
+=================================================
+	Call with new parameter
+=================================================
+*/
+	} else if($reqParams['id'] == $_service::NEWPARAM){
+		if($GLOBALS['_rest']->isMethod('GET')){
+			$data['self'] = $_service->get(null);
+			if($GLOBALS['_grantservice']->authoz('ADMIN')){
+				$config->addNewLinks($data, [
+					[
+						'href' => $GLOBALS['_rest']->getServicePath(),
+						'rel' => 'action',  'alias' => 'save', 'method' => 'put',
+						'title' => 'Create', 'icon' => 'content:ic-save',
+					],
+				]);
+			}
+		} else{
+			throw new \sys\HttpMethodNotAllowedException();
+		}
+/*
+=================================================
+	Call with item id
+=================================================
+*/
 	} else{
-		$GLOBALS['_grantservice']->authozExcp('EDUSERVICES_MANAGER');
-		if($GLOBALS['_rest']->getMethod() == 'DELETE'){
-			$data['id'] = $_service->delete($GLOBALS['_rest']->getArgument(0));
+		if($GLOBALS['_rest']->isMethod('GET')){
+			$data['self'] = $_service->get($reqParams['id']);
+			if($GLOBALS['_grantservice']->authoz('ADMIN')){
+				if($data['self']['_updatable']) $config->addNewLinks($data, [
+					[
+						'href' => $data['uri'],
+						'rel' => 'action', 'alias' => 'save', 'method' => 'put',
+						'title' => 'Edit', 'icon' => 'editor:ic-mode-edit',
+					],
+				]);
+				if($data['self']['_deletable']) $config->addNewLinks($data, [
+					[
+						'href' => $data['uri'],
+						'rel' => 'action',  'alias' => 'delete', 'method' => 'delete',
+						'title' => 'Delete', 'icon' => 'action:ic-delete', 'class' => 'warn',
+					],
+				]);
+			}
+		} else if($GLOBALS['_rest']->isMethod('PUT')){
+			$_service->save($reqParams['id'], $GLOBALS['_rest']->getContent(), $GLOBALS['_grantservice']->getUsername());
+			$data['status'] = 'updated';
+			$data['info'] = $data['uri']." was updated";
+		} else if($GLOBALS['_rest']->isMethod('DELETE')){
+			$_service->delete($reqParams['id']);
 			$data['status'] = 'deleted';
 			$data['info'] = $GLOBALS['_rest']->getServicePath($data['id'])." was deleted";
 		} else{
-			$item = $GLOBALS['_rest']->getContent();
-			if($GLOBALS['_rest']->getArgument(0) === null){
-				$data['id'] = $_service->save(null, $item, $GLOBALS['_grantservice']->getUsername());
-				$data['status'] = 'created';
-				$data['info'] = $GLOBALS['_rest']->getServicePath($data['id'])." was created";
-			} else{
-				$data['id'] = $_service->save($GLOBALS['_rest']->getArgument(0), $item, $GLOBALS['_grantservice']->getUsername());
-				$data['status'] = 'updated';
-				$data['info'] = $GLOBALS['_rest']->getServicePath($data['id'])." was updated";
-			}
+			throw new \sys\HttpMethodNotAllowedException();
 		}
 	}
 ?>

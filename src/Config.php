@@ -31,7 +31,7 @@
 			if(empty($this->config['links'])) return null;
 
 			foreach($this->config['links'] as $link){
-				if((isset($link['href']) && ($link['href'] == $uri)) || (isset($link['alias']) && ($link['alias'] == $uri))) return $link + array('rel' => null, 'href' => null);
+				if((isset($link['href']) && ($link['href'] == $uri)) || (isset($link['alias']) && ($link['alias'] == $uri))) return $link + ['rel' => null, 'href' => null];
 			}
 
 			return null;
@@ -43,7 +43,7 @@
 			if(empty($this->config['links'])) return $links;
 
 			foreach($this->config['links'] as $link){
-				if((isset($link['rel'])) && ($link['rel'] == $rel)) $links[] = $link + array('rel' => null, 'href' => null);
+				if((isset($link['rel'])) && ($link['rel'] == $rel)) $links[] = $link + ['rel' => null, 'href' => null];
 			}
 
 			return $links;
@@ -60,11 +60,19 @@
 			return static::getModulePath($link['href']);
 		}
 
-		public function addLink(&$data, $uri, $extend = array()){
+		protected function extendLink($link, $extend){
+			if(is_callable($extend)){
+				return $extend($link);
+			} else{
+				return array_merge($link, (array)$extend);
+			}
+		}
+
+		public function addLink(&$data, $uri, $extend = null){
 			$this->prepareData($data);
 
 			$link = $this->link($uri);
-			if($link !== null) $data['links'][] = array_merge($link, $extend);
+			if($link !== null) $data['links'][] = $this->extendLink($link);
 
 			return ($link !== null);
 		}
@@ -72,13 +80,12 @@
 		public function addLinks(&$data, $rel, $extend = null){
 			$this->prepareData($data);
 
-			$links = array_merge($this->links($rel), (array)$extend);
-			$data['links'] = array_merge($data['links'], $links);
+			$links = $this->links($rel);
+			foreach($links as $index => $link) $links[$index] = $this->extendLink($link);
 
 			return (count($links) > 0);
 		}
 
-/*
 		public function addNewLinks(&$data, $links){
 			$this->prepareData($data);
 
@@ -87,6 +94,5 @@
 
 			return true;
 		}
-*/
 	}
 ?>

@@ -381,6 +381,12 @@
 			return (isset($this->arguments[$index]))? $this->arguments[$index] : null;
 		}
 
+		public function isMethod($methods = null){
+			$methods = (array)$methods;
+
+			return in_array($this->getMethod(), $methods);
+		}
+
 		public function bind($names = null){
 			$map = [];
 
@@ -388,8 +394,8 @@
 				$names = (array)$names;
 				$length = count($names);
 
-				for($i = 0; ($i < $length) && isset($this->arguments[$i]); $i++){
-					$map[$names[$i]] = $this->arguments[$i];
+				for($i = 0; $i < $length; $i++){
+					$map[$names[$i]] = (isset($this->arguments[$i]))? $this->arguments[$i] : null;
 				}
 			}
 

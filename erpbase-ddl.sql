@@ -5,7 +5,7 @@
 -- Dumped from database version 9.5.0
 -- Dumped by pg_dump version 9.5.0
 
--- Started on 2016-02-24 16:33:17
+-- Started on 2016-02-26 00:41:53
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -54,7 +54,7 @@ CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
 
 
 --
--- TOC entry 2282 (class 0 OID 0)
+-- TOC entry 2284 (class 0 OID 0)
 -- Dependencies: 213
 -- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner: 
 --
@@ -97,7 +97,7 @@ CREATE SEQUENCE accesstoken_id_seq
 ALTER TABLE accesstoken_id_seq OWNER TO startup;
 
 --
--- TOC entry 2283 (class 0 OID 0)
+-- TOC entry 2285 (class 0 OID 0)
 -- Dependencies: 184
 -- Name: accesstoken_id_seq; Type: SEQUENCE OWNED BY; Schema: auth; Owner: startup
 --
@@ -137,7 +137,7 @@ CREATE SEQUENCE account_id_seq
 ALTER TABLE account_id_seq OWNER TO startup;
 
 --
--- TOC entry 2284 (class 0 OID 0)
+-- TOC entry 2286 (class 0 OID 0)
 -- Dependencies: 186
 -- Name: account_id_seq; Type: SEQUENCE OWNED BY; Schema: auth; Owner: startup
 --
@@ -175,7 +175,7 @@ CREATE SEQUENCE accountscope_id_seq
 ALTER TABLE accountscope_id_seq OWNER TO startup;
 
 --
--- TOC entry 2285 (class 0 OID 0)
+-- TOC entry 2287 (class 0 OID 0)
 -- Dependencies: 188
 -- Name: accountscope_id_seq; Type: SEQUENCE OWNED BY; Schema: auth; Owner: startup
 --
@@ -213,7 +213,7 @@ CREATE SEQUENCE authzcode_id_seq
 ALTER TABLE authzcode_id_seq OWNER TO startup;
 
 --
--- TOC entry 2286 (class 0 OID 0)
+-- TOC entry 2288 (class 0 OID 0)
 -- Dependencies: 190
 -- Name: authzcode_id_seq; Type: SEQUENCE OWNED BY; Schema: auth; Owner: startup
 --
@@ -250,7 +250,7 @@ CREATE SEQUENCE refreshtoken_id_seq
 ALTER TABLE refreshtoken_id_seq OWNER TO startup;
 
 --
--- TOC entry 2287 (class 0 OID 0)
+-- TOC entry 2289 (class 0 OID 0)
 -- Dependencies: 192
 -- Name: refreshtoken_id_seq; Type: SEQUENCE OWNED BY; Schema: auth; Owner: startup
 --
@@ -290,7 +290,7 @@ CREATE SEQUENCE account_id_seq
 ALTER TABLE account_id_seq OWNER TO startup;
 
 --
--- TOC entry 2288 (class 0 OID 0)
+-- TOC entry 2290 (class 0 OID 0)
 -- Dependencies: 194
 -- Name: account_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: startup
 --
@@ -307,7 +307,9 @@ SET search_path = stub, pg_catalog;
 
 CREATE TABLE data01 (
     id bigint NOT NULL,
-    data jsonb
+    code character varying(64) NOT NULL,
+    name character varying(256) NOT NULL,
+    data jsonb NOT NULL
 );
 
 
@@ -329,7 +331,7 @@ CREATE SEQUENCE data01_id_seq
 ALTER TABLE data01_id_seq OWNER TO startup;
 
 --
--- TOC entry 2289 (class 0 OID 0)
+-- TOC entry 2291 (class 0 OID 0)
 -- Dependencies: 211
 -- Name: data01_id_seq; Type: SEQUENCE OWNED BY; Schema: stub; Owner: startup
 --
@@ -368,7 +370,7 @@ CREATE SEQUENCE account_id_seq
 ALTER TABLE account_id_seq OWNER TO startup;
 
 --
--- TOC entry 2290 (class 0 OID 0)
+-- TOC entry 2292 (class 0 OID 0)
 -- Dependencies: 196
 -- Name: account_id_seq; Type: SEQUENCE OWNED BY; Schema: sys; Owner: startup
 --
@@ -406,7 +408,7 @@ CREATE SEQUENCE accountrole_id_seq
 ALTER TABLE accountrole_id_seq OWNER TO startup;
 
 --
--- TOC entry 2291 (class 0 OID 0)
+-- TOC entry 2293 (class 0 OID 0)
 -- Dependencies: 198
 -- Name: accountrole_id_seq; Type: SEQUENCE OWNED BY; Schema: sys; Owner: startup
 --
@@ -444,7 +446,7 @@ CREATE SEQUENCE client_id_seq
 ALTER TABLE client_id_seq OWNER TO startup;
 
 --
--- TOC entry 2292 (class 0 OID 0)
+-- TOC entry 2294 (class 0 OID 0)
 -- Dependencies: 200
 -- Name: client_id_seq; Type: SEQUENCE OWNED BY; Schema: sys; Owner: startup
 --
@@ -482,7 +484,7 @@ CREATE SEQUENCE clientgranttype_id_seq
 ALTER TABLE clientgranttype_id_seq OWNER TO startup;
 
 --
--- TOC entry 2293 (class 0 OID 0)
+-- TOC entry 2295 (class 0 OID 0)
 -- Dependencies: 202
 -- Name: clientgranttype_id_seq; Type: SEQUENCE OWNED BY; Schema: sys; Owner: startup
 --
@@ -520,7 +522,7 @@ CREATE SEQUENCE clientredirecturl_id_seq
 ALTER TABLE clientredirecturl_id_seq OWNER TO startup;
 
 --
--- TOC entry 2294 (class 0 OID 0)
+-- TOC entry 2296 (class 0 OID 0)
 -- Dependencies: 204
 -- Name: clientredirecturl_id_seq; Type: SEQUENCE OWNED BY; Schema: sys; Owner: startup
 --
@@ -557,7 +559,7 @@ CREATE SEQUENCE group_id_seq
 ALTER TABLE group_id_seq OWNER TO startup;
 
 --
--- TOC entry 2295 (class 0 OID 0)
+-- TOC entry 2297 (class 0 OID 0)
 -- Dependencies: 206
 -- Name: group_id_seq; Type: SEQUENCE OWNED BY; Schema: sys; Owner: startup
 --
@@ -595,7 +597,7 @@ CREATE SEQUENCE groupaccount_id_seq
 ALTER TABLE groupaccount_id_seq OWNER TO startup;
 
 --
--- TOC entry 2296 (class 0 OID 0)
+-- TOC entry 2298 (class 0 OID 0)
 -- Dependencies: 208
 -- Name: groupaccount_id_seq; Type: SEQUENCE OWNED BY; Schema: sys; Owner: startup
 --
@@ -633,7 +635,7 @@ CREATE SEQUENCE user_id_seq
 ALTER TABLE user_id_seq OWNER TO startup;
 
 --
--- TOC entry 2297 (class 0 OID 0)
+-- TOC entry 2299 (class 0 OID 0)
 -- Dependencies: 210
 -- Name: user_id_seq; Type: SEQUENCE OWNED BY; Schema: sys; Owner: startup
 --
@@ -884,7 +886,16 @@ ALTER TABLE ONLY account
 SET search_path = stub, pg_catalog;
 
 --
--- TOC entry 2147 (class 2606 OID 57364)
+-- TOC entry 2147 (class 2606 OID 65546)
+-- Name: data01_code_key; Type: CONSTRAINT; Schema: stub; Owner: startup
+--
+
+ALTER TABLE ONLY data01
+    ADD CONSTRAINT data01_code_key UNIQUE (code);
+
+
+--
+-- TOC entry 2149 (class 2606 OID 57364)
 -- Name: data01_pkey; Type: CONSTRAINT; Schema: stub; Owner: startup
 --
 
@@ -1093,7 +1104,7 @@ CREATE INDEX groupaccount_id_sys_account_idx ON groupaccount USING btree (id_sys
 SET search_path = auth, pg_catalog;
 
 --
--- TOC entry 2148 (class 2606 OID 49311)
+-- TOC entry 2150 (class 2606 OID 49311)
 -- Name: accesstoken_id_auth_account_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: startup
 --
 
@@ -1102,7 +1113,7 @@ ALTER TABLE ONLY accesstoken
 
 
 --
--- TOC entry 2149 (class 2606 OID 49316)
+-- TOC entry 2151 (class 2606 OID 49316)
 -- Name: accountscope_id_auth_account_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: startup
 --
 
@@ -1111,7 +1122,7 @@ ALTER TABLE ONLY accountscope
 
 
 --
--- TOC entry 2150 (class 2606 OID 49321)
+-- TOC entry 2152 (class 2606 OID 49321)
 -- Name: authzcode_id_auth_account_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: startup
 --
 
@@ -1120,7 +1131,7 @@ ALTER TABLE ONLY authzcode
 
 
 --
--- TOC entry 2151 (class 2606 OID 49326)
+-- TOC entry 2153 (class 2606 OID 49326)
 -- Name: refreshtoken_id_auth_account_fkey; Type: FK CONSTRAINT; Schema: auth; Owner: startup
 --
 
@@ -1131,7 +1142,7 @@ ALTER TABLE ONLY refreshtoken
 SET search_path = sys, pg_catalog;
 
 --
--- TOC entry 2152 (class 2606 OID 49331)
+-- TOC entry 2154 (class 2606 OID 49331)
 -- Name: account_id_account_fkey; Type: FK CONSTRAINT; Schema: sys; Owner: startup
 --
 
@@ -1140,7 +1151,7 @@ ALTER TABLE ONLY account
 
 
 --
--- TOC entry 2153 (class 2606 OID 49336)
+-- TOC entry 2155 (class 2606 OID 49336)
 -- Name: accountrole_id_sys_account_fkey; Type: FK CONSTRAINT; Schema: sys; Owner: startup
 --
 
@@ -1149,7 +1160,7 @@ ALTER TABLE ONLY accountrole
 
 
 --
--- TOC entry 2154 (class 2606 OID 49341)
+-- TOC entry 2156 (class 2606 OID 49341)
 -- Name: client_id_sys_account_fkey; Type: FK CONSTRAINT; Schema: sys; Owner: startup
 --
 
@@ -1158,7 +1169,7 @@ ALTER TABLE ONLY client
 
 
 --
--- TOC entry 2155 (class 2606 OID 49346)
+-- TOC entry 2157 (class 2606 OID 49346)
 -- Name: clientgranttype_id_sys_client_fkey; Type: FK CONSTRAINT; Schema: sys; Owner: startup
 --
 
@@ -1167,7 +1178,7 @@ ALTER TABLE ONLY clientgranttype
 
 
 --
--- TOC entry 2156 (class 2606 OID 49351)
+-- TOC entry 2158 (class 2606 OID 49351)
 -- Name: clientredirecturl_id_sys_client_fkey; Type: FK CONSTRAINT; Schema: sys; Owner: startup
 --
 
@@ -1176,7 +1187,7 @@ ALTER TABLE ONLY clientredirecturi
 
 
 --
--- TOC entry 2157 (class 2606 OID 49356)
+-- TOC entry 2159 (class 2606 OID 49356)
 -- Name: group_id_sys_account_fkey; Type: FK CONSTRAINT; Schema: sys; Owner: startup
 --
 
@@ -1185,7 +1196,7 @@ ALTER TABLE ONLY "group"
 
 
 --
--- TOC entry 2158 (class 2606 OID 49361)
+-- TOC entry 2160 (class 2606 OID 49361)
 -- Name: groupaccount_id_sys_account_fkey; Type: FK CONSTRAINT; Schema: sys; Owner: startup
 --
 
@@ -1194,7 +1205,7 @@ ALTER TABLE ONLY groupaccount
 
 
 --
--- TOC entry 2159 (class 2606 OID 49366)
+-- TOC entry 2161 (class 2606 OID 49366)
 -- Name: groupaccount_id_sys_group_fkey; Type: FK CONSTRAINT; Schema: sys; Owner: startup
 --
 
@@ -1203,7 +1214,7 @@ ALTER TABLE ONLY groupaccount
 
 
 --
--- TOC entry 2160 (class 2606 OID 49371)
+-- TOC entry 2162 (class 2606 OID 49371)
 -- Name: user_id_sys_account_fkey; Type: FK CONSTRAINT; Schema: sys; Owner: startup
 --
 
@@ -1212,7 +1223,7 @@ ALTER TABLE ONLY "user"
 
 
 --
--- TOC entry 2281 (class 0 OID 0)
+-- TOC entry 2283 (class 0 OID 0)
 -- Dependencies: 8
 -- Name: public; Type: ACL; Schema: -; Owner: postgres
 --
@@ -1223,7 +1234,7 @@ GRANT ALL ON SCHEMA public TO postgres;
 GRANT ALL ON SCHEMA public TO PUBLIC;
 
 
--- Completed on 2016-02-24 16:33:18
+-- Completed on 2016-02-26 00:41:54
 
 --
 -- PostgreSQL database dump complete

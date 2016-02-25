@@ -7,7 +7,8 @@
 	define('RESTCONFIGURATED', true);
 
 	$service = $GLOBALS['_rest']->getService();
-	$config = new \sys\Config(\sys\Rest::CONFIG_SERVICE.'.php');
+	$config = new \sys\Config(__DIR__.'/'.\sys\Rest::CONFIG_SERVICE.'.php');
+	$GLOBALS['_pdoconfigurated'] = new \sys\Pdoconfigurated($infra['db']);
 
 	try{
 		if(in_array($service, ['configuration', 'view', 'javascript', 'css', 'image', 'font'])){
