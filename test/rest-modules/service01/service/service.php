@@ -1,8 +1,9 @@
 <?php
-	namespace \rest\service01;
+	namespace rest\service01;
 
-	class Data01 Extends \sys\DataService{
-		static TNAME = 'stub.data01';
+	class Data01Service Extends \sys\DataService{
+		const NEWPARAM = '::initial';
+		const TABLE = 'stub.data01';
 
 		function __constructor($pdoconfigurated){
 			parent::__constructor($pdoconfigurated);
@@ -12,7 +13,7 @@
 			if(empty($data)) return;
 
 			if(!empty($data['data'])){
-				$data['data'] = json_decode($data, TRUE);
+				$data['data'] = json_decode($data['data'], TRUE);
 			}
 		}
 
@@ -20,20 +21,23 @@
 			$data = false;
 
 			if($id === null){
-				$data = ['code' => 'Enter code', 'data': '{}'];
+				$data = ['code' => 'Enter code', 'data' => '{}'];
 			} else{
 				$sqlStatement['sqls'][] = "(_table.id = :id)";
 				$sqlStatement['params'][':id'] = $id;
 
 				$whereSQL = (!empty($sqlStatement['sqls']))? 'WHERE '.implode(' AND ', $sqlStatement['sqls']) : '';
 
-				$stmt = $this->getPdo()->prepare("
+				$stmt = $this->getPdo()->prepare(sprintf("
 					SELECT
 						  *
-					FROM {$this::TNAME} AS _table
-					{$whereSQL}
+					FROM %s AS _table
+					%s
 					FOR UPDATE OF _table
-				");
+				", static::TABLE, $whereSQL));
+				$stmt->execute($sqlStatement['params']);
+				$data = $stmt->fetch(\PDO::FETCH_ASSOC);
+				$stmt->closeCursor();
 			}
 
 			return $data;
@@ -56,16 +60,16 @@
 
 			$whereSQL = (!empty($sqlStatement['sqls']))? 'WHERE '.implode(' AND ', $sqlStatement['sqls']) : '';
 
-			$sqlPattern = "
+			$sqlPattern = sprintf("
 				SELECT DISTINCT
 					  _table.id AS id
 					, _table.code AS code
 					, _table.name AS name
 					, _table.data AS data
-				FROM {$this::TNAME} AS _table
+				FROM %s AS _table
 				{$whereSQL}
-				%s
-			";
+				%%s
+			", static::TABLE);
 
 			if(!empty($options['page']['current'])){
 				$stmt = $this->getPdo()->prepare(sprintf('
@@ -87,6 +91,61 @@
 			$stmt->closeCursor();
 
 			return $datas;
+		}
+
+		protected function save($existedData, $data){
+			$id = (!empty($existedData['id']))? $existedData['id'] : null;
+
+			if($id === null){
+				$stmt = $this->getPdo()->prepare(sprintf("
+					INSERT INTO %s (
+						  code
+						, name
+						, data
+					) VALUES (
+						  :code
+						, :name
+						, :data
+					)
+				", static::TABLE));
+				$stmt->execute(array_merge(
+					  array_intersect_key($data, array_flip(['code', 'name']))
+					, ['data' => json_encode($data['data'])]
+				));
+				$stmt->closeCursor();
+
+				$id = $this->getPdo()->lastInsertId(static::TABLE.'_id_seq');
+			} else{
+				$stmt = $this->getPdo()->prepare(sprintf("
+					UPDATE %s SET
+						  code = :code
+						, name = :name
+						, data = :data
+					WHERE id = :id
+				", static::TABLE));
+				$stmt->execute(array_merge(
+					  array_intersect_key($data, array_flip(['code', 'name', 'data']))
+					, ['id' => $id, 'data' => json_encode($data['data'])]
+				));
+				$stmt->closeCursor();
+			}
+
+			return $id;
+		}
+
+		protected function delete($existedData){
+			$id = (!empty($existedData['id']))? $existedData['id'] : null;
+
+			$stmt = $this->getPdo()->prepare(sprintf("
+				DELETE FROM %s
+				WHERE id = :id
+			", static::TABLE));
+			$stmt->execute([
+				'id' => $id,
+			]);
+			$stmt->closeCursor();
+
+			return $id;
 		}
 	}
 ?>

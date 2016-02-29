@@ -6,10 +6,10 @@
 
 	$data = [
 		'uri' => $GLOBALS['_rest']->getRestUri(),
+		'links' => [],
 	];
 
 	$reqParams = $GLOBALS['_rest']->bind(['id']);
-
 /*
 =================================================
 	Call directly to service
@@ -42,7 +42,7 @@
 			}
 			//if(is_array($options['page'])) $data['page'] = $options['page'];
 		} else if($GLOBALS['_rest']->isMethod('PUT')){
-			$GLOBALS['_grantservice']->authozExcp('ADMIN')
+			$GLOBALS['_grantservice']->authozExcp('ADMIN');
 			$data['uri'] = $GLOBALS['_rest']->getServicePath(
 				$_service->save(null, $GLOBALS['_rest']->getContent(), $GLOBALS['_grantservice']->getUsername())
 			);
@@ -57,7 +57,7 @@
 	Call with new parameter
 =================================================
 */
-	} else if($reqParams['id'] == $_service::NEWPARAM){
+	} else if($reqParams['id'] === $_service::NEWPARAM){
 		if($GLOBALS['_rest']->isMethod('GET')){
 			$data['self'] = $_service->get(null);
 			if($GLOBALS['_grantservice']->authoz('ADMIN')){

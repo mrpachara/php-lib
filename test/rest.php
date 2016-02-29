@@ -11,7 +11,7 @@
 
 	header("Access-Control-Allow-Origin: *");
 
-	$GLOBALS['_grantservice'] = new \sys\GrantService($infra['authoz'], $GLOBALS['_oauth2server']);
+	$GLOBALS['_grantservice'] = new \sys\GrantService($infra['authz'], $GLOBALS['_oauth2server']);
 
 	function rest_error($errno, $errstr, $errfile, $errline){
 		\sys\Rest::response([
