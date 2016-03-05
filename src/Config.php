@@ -49,6 +49,14 @@
 			return $links;
 		}
 
+		public function linkProp($uri, $prop){
+			if($link = $this->link($uri)){
+				return (isset($link[$prop]))? $link[$prop] : null;
+			}
+
+			return null;
+		}
+
 		protected function prepareData(&$data){
 			if(!isset($data['links'])) $data['links'] = [];
 			$data['links'] = (array)$data['links'];
