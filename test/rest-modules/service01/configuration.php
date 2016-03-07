@@ -5,7 +5,7 @@
 	}
 
 	$data = [
-		'uri' => $GLOBALS['_rest']->getRestUri(),
+		'uri' => $GLOBALS['_rest']->getConfigUri(),
 		'links' => [
 			['rel' => 'service', 'href' => $GLOBALS['_rest']->getModulePath("data01"), 'alias' => "data01"],
 			['rel' => 'resource', 'href' => $GLOBALS['_rest']->getModulePath("data01-domain"), 'alias' => "data01-domain"],
