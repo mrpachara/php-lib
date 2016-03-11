@@ -11,38 +11,21 @@
 	$GLOBALS['_pdoconfigurated'] = new \sys\Pdoconfigurated($infra['db']);
 
 	try{
-		if(in_array($service, ['configuration', 'view', 'javascript', 'css', 'image', 'font'])){
-			if(in_array($service, ['view', 'javascript', 'css'])){
-				ob_start();
-				include $service.'-resource/'.$GLOBALS['_rest']->getArgument(0).'.php';
-				$data = ob_get_clean();
-
-				$contentType = 'text/html';
-				if($service == 'css'){
-					$contentType = 'text/css';
-				} else if($service == 'javascript'){
-					$contentType = 'application/javascript';
-				}
-
-				$GLOBALS['_rest']->setResponseContentType("{$contentType}; charset=utf-8");
-			} else if(in_array($service, ['image', 'font'])){
-				$data = fopen(__DIR__.'/'.$service.'-resource/'.$GLOBALS['_rest']->getArgument(0), 'rb');
-
-				$contentType = 'text/html';
-				if($service == 'image'){
-					$contentType = 'image/png';
-				} else if($service == 'font'){
-					$contentType = 'application/x-font-woff';
-				}
-				$GLOBALS['_rest']->setResponseContentType($contentType);
+		if(is_dir(__DIR__.'/resources/'.$service)){
+			if(file_exists(__DIR__.'/resources/'.$service.'/'.'index.php')){
+				require_once __DIR__.'/resources/'.$service.'/'.'index.php';
+			} else if(file_exists(__DIR__.'/resources/'.$service.'/'.$GLOBALS['_rest']->getArgument(0))){
+				$filename = __DIR__.'/resources/'.$service.'/'.$GLOBALS['_rest']->getArgument(0);
+				$data = fopen($filename, 'rb');
+				$GLOBALS['_rest']->setResponseContentType(mime_content_type($filename));
 			} else{
-				include $service.'.php';
+				throw new \sys\HttpNotFoundException();
 			}
 		} else{
 			$GLOBALS['_rest']->setCacheLimit('nocache');
 			//$GLOBALS['_grantservice']->authozExcp();
 
-			require_once 'service/serviceconfigurated.php';
+			require_once 'service/index.php';
 			include $service.'.php';
 		}
 	} catch(Exception $excp){
