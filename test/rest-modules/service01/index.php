@@ -11,7 +11,9 @@
 	$GLOBALS['_pdoconfigurated'] = new \sys\Pdoconfigurated($infra['db']);
 
 	try{
-		if(is_dir(__DIR__.'/resources/'.$service)){
+		if($service == \sys\Rest::CONFIG_SERVICE){
+			include $service.'.php';
+		}else if(is_dir(__DIR__.'/resources/'.$service)){
 			if(file_exists(__DIR__.'/resources/'.$service.'/'.'index.php')){
 				require_once __DIR__.'/resources/'.$service.'/'.'index.php';
 			} else if(file_exists(__DIR__.'/resources/'.$service.'/'.$GLOBALS['_rest']->getArgument(0))){

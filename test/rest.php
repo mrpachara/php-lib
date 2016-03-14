@@ -37,8 +37,8 @@
 	//if($GLOBALS['_rest']->getService() != 'view') sleep(1);
 	//sleep(1);
 
-	if(($GLOBALS['_rest']->getModule() != null) && (file_exists($infra['rest']['path'].$GLOBALS['_rest']->getModule()."/rest.php"))){
-		require_once $infra['rest']['path'].$GLOBALS['_rest']->getModule()."/rest.php";
+	if(($GLOBALS['_rest']->getModule() != null) && (file_exists($infra['rest']['path'].$GLOBALS['_rest']->getModule()."/index.php"))){
+		require_once $infra['rest']['path'].$GLOBALS['_rest']->getModule()."/index.php";
 	} else{
 		$GLOBALS['_rest']->response([
 			'errors' => [
