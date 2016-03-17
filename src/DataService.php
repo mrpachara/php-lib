@@ -172,7 +172,7 @@
 
 			/* delete existed data */
 			$inParams = [];
-			$undeleteSql = "AND (id NOT IN (".\sys\PDO::prepareIn(':_undeleted_', $keepIds, $inParams)."))";
+			$undeleteSql = "AND (id NOT IN (".PDO::prepareIn(':_undeleted_', $keepIds, $inParams)."))";
 			$stmt = $this->getPdo()->prepare(sprintf($deleteSql, (empty($inParams))? "" : $undeleteSql));
 			$stmt->execute(array_merge($criteria, $inParams));
 			$stmt->closeCursor();
@@ -238,7 +238,7 @@
 		}
 
 		public function __call($method, $args){
-			if(($method === 'getPdo') || (!in_array($method, get_class_methods($this)))) throw new \sys\DataServiceException("%s unknow {$method} method", 400);
+			if(($method === 'getPdo') || (!in_array($method, get_class_methods($this)))) throw new DataServiceException("unknown {$method} method", DataServiceException::UNKNOWN_METHOD);
 
 			$initSqlStatement = 'initSqlStatement';
 			if(array_key_exists($method, static::ANNO_INITSQLSTMT_MAP)){
@@ -283,7 +283,7 @@
 				$existedData = $this->__call($get, array(isset($args[0])? $args[0] : null, $sqlStatement));
 
 				if($existedData === false){
-					throw new \sys\DataServiceException("%s not found", 404);
+					throw new DataServiceException(sprintf("%s not found", isset($args[0])? $args[0] : 'null'), DataServiceException::NOT_FOUND);
 				}
 
 				array_shift($args);
@@ -302,15 +302,15 @@
 					$existedData = $this->__call($get, array(isset($args[0])? $args[0] : null, $sqlStatement));
 
 					if($existedData === false){
-						throw new \sys\DataServiceException("%s not found", 404);
+						throw new DataServiceException(sprintf("%s not found", isset($args[0])? $args[0] : 'null'), DataServiceException::NOT_FOUND);
 					}
 
 					if((static::isPrefix('save', $method) || static::isPrefix('update', $method)) && !$existedData['_updatable']){
-						throw new \sys\DataServiceException("%s cannot be updated", 400);
+						throw new DataServiceException(sprintf("%s cannot be updated", isset($args[0])? $args[0] : 'null'), DataServiceException::CANNOT_PROCESS);
 					}
 
 					if(static::isPrefix('delete', $method) && !$existedData['_deletable']){
-						throw new \sys\DataServiceException("%s cannot be deleted", 400);
+						throw new DataServiceException(sprintf("%s cannot be deleted", isset($args[0])? $args[0] : 'null'), DataServiceException::CANNOT_PROCESS);
 					}
 
 					array_shift($args);
@@ -324,7 +324,7 @@
 				}
 				return ($this->getPdo()->commit())? $result : false;
 			} else{
-				throw new \sys\DataServiceException("%s unknow {$method} method", 400);
+				throw new DataServiceException("unknown {$method} method", DataServiceException::UNKNOWN_METHOD);
 			}
 		}
 

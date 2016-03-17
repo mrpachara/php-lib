@@ -48,7 +48,7 @@
 			$propLength = strlen($propName);
 
 			foreach($responseContentTypes as $responseContentType){
-				if(substr($responseContentType, 0, $propLength) == $propName){
+				if(strtolower(substr($responseContentType, 0, $propLength)) == $propName){
 					return $responseContentType;
 				}
 			}
@@ -166,54 +166,30 @@
 			return ob_get_clean();
 		}
 
-		public static function response($data, $forceType = null, $code = null, $message = null){
+		public static function response($data, $forceType = null, $code = null, $message = null, $debug = 0){
 			$response = null;
 			$exit_code = null;
-			$exit_response = null;
+			$exit_message = null;
 
-			$responseContentType = static::getResponseContentType();
-			if(empty($responseContentType)){
-				if(!empty($data['errors'])){
-					$exit_code = 500;
-					$exit_message = 'Internal Server Error';
+			if($data instanceof \Exception){
+				if(!($data instanceof HttpException)) $data = new HttpInternalServerErrorException($data);
 
-					/* prepare error data */
-					foreach($data['errors'] as &$error){
-						if($error instanceof HttpException){
-							$exit_code = $error->getCode();
-							$exit_message = strtok($error->getMessage(), "\n");
-						/*
-						} else if(!empty($error['code-response'])){
-							$exit_code = $error['code-response'];
-							$exit_message = (!empty($error['message-response']))? $error['message-response'] : static::DEFAULT_RESPONSE_MESSAGE;
+				$exit_code = $data->getCode();
+				$exit_message = $data->getMessage();
+				if($data->getPrevious()) $data = $data->getPrevious();
 
-							if(empty($error['code'])){
-								$error['code'] = $exit_code;
-								$error['message'] = $exit_message;
-							}
+				$transformedData = [
+					'error' => $data->getCode(),
+					'error_description' => $data->getMessage(),
+				];
 
-							unset($error['code-response']);
-							unset($error['message-response']);
-						*/
-						}
+				if($debug > 0) $transformedData = array_merge($transformedData, ['error_exception' => $data->__toString()]);
+				if($debug > 1) $transformedData = array_merge($transformedData, ['error_trace' => $data->getTraceAsString()]);
 
-						$error = [
-							'code' => $error->getCode(),
-							'message' => $error->getMessage(),
-							'exception' => $error->__toString(),
-						];
+				$data = $transformedData;
+			}
 
-						// TODO: less info for debug == 0
-						/*
-						if($conf['debug'] == 0){
-							if($error['exception'] instanceof \PDOException) $message = "Database Error!!!";
-
-							unset($error['exception']);
-						};
-						*/
-					}
-				}
-
+			if(!static::getResponseContentType()){
 				$bestContentTypeStr = $forceType;
 				if($bestContentTypeStr === null){
 					$bestContentTypeStr = static::getBestContentType([
@@ -221,6 +197,7 @@
 						'application/x-www-form-urlencoded',
 						'application/xhtml+xml; charset=utf-8',
 						'text/html; charset=utf-8',
+						'text/plain; charset=utf-8',
 					], true);
 				}
 
@@ -262,6 +239,8 @@
 			}
 		}
 
+		private $debug;
+
 		private $restPath = null;
 		private $method = null;
 
@@ -283,13 +262,16 @@
 
 		private $content = null;
 
-		function __construct($absolute = true, $debug = 0){
+		function __construct($debug = 0){
+			$absolute = true;
+			$this->debug = $debug;
+
 			$this->method = $_SERVER['REQUEST_METHOD'];
 
 			$urls = parse_url($_SERVER['REQUEST_URI']);
 			if(!empty($urls['query'])) parse_str($urls['query'], $this->query);
 
-			$this->restPath = (($absolute)? static::getReference() : '').substr($urls['path'], 0, strlen($urls['path']) - strlen($_SERVER['PATH_INFO'])).'/';
+			$this->restPath = (($absolute)? static::getReference() : '').substr($urls['path'], 0, strlen($urls['path']) - ((empty($_SERVER['PATH_INFO']))? 0 : strlen($_SERVER['PATH_INFO']))).'/';
 			if(!empty($_SERVER['PATH_INFO'])){
 				$pathinfos = explode('/', substr($_SERVER['PATH_INFO'], 1));
 				if(($pathinfos[0] != '.') && ($pathinfos[0] != '..')) $this->module = $pathinfos[0];
@@ -434,8 +416,8 @@
 			$this->responseContentType = $responseContentType;
 		}
 
-		public function sendResponse($data, $forceType = null){
-			$this->response($data, ($forceType === null)? $this->responseContentType : $forceType);
+		public function sendResponse($data, $forceType = null, $debug = null){
+			$this->response($data, ($forceType === null)? $this->responseContentType : $forceType, null, null, ($debug === null)? $this->debug : $debug);
 		}
 	}
 ?>

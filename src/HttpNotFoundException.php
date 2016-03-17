@@ -2,8 +2,8 @@
 	namespace sys;
 
 	class HttpNotFoundException extends HttpException {
-		function __construct($message = 'Not Found', $previous = null){
-			parent::__construct($message, 404, $previous);
+		function __construct($previous = null){
+			parent::__construct('Not Found', 404, $previous);
 		}
 	}
 

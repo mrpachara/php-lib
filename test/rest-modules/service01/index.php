@@ -30,14 +30,17 @@
 			require_once 'service/index.php';
 			include $service.'.php';
 		}
-	} catch(Exception $excp){
-		$data = [
-			'uri' => $GLOBALS['_rest']->getRestUri(),
-			'errors' => [
-				($excp instanceof \sys\DataServiceException)?
-					new \sys\HttpException(sprintf($excp->getMessage(), $GLOBALS['_rest']->getRestUri()), $excp->getCode(), $excp) : $excp,
-			],
-		];
+	} catch(\sys\DataServiceException $excp){
+		switch($excp->getCode()){
+			case \sys\DataServiceException::NOT_FOUND:
+				$excp = new \sys\HttpNotFoundException($excp);
+				break;
+			case \sys\DataServiceException::CANNOT_PROCESS:
+				$excp = new \sys\HttpMethodNotAllowedException($excp);
+				break;
+		}
+
+		throw $excp;
 	}
 
 	$GLOBALS['_rest']->sendResponse($data);
