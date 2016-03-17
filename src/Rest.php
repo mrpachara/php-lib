@@ -126,7 +126,7 @@
 			return $isMatch;
 		}
 
-		public static function getBestContentType($contentTypesStrs, $forceType = null){
+		public static function getBestContentType($contentTypesStrs, $forcedContentType = null){
 			$bestContentType = null;
 
 			$negotiationContentTypes = static::getResponseNegotiation();
@@ -149,11 +149,11 @@
 				}
 			}
 
-			if(($bestContentType === null) && ($forceType !== null)){
-				if(is_bool($forceType) && $forceType && (count($negotiationContentTypes) > 0)){
+			if(($bestContentType === null) && ($forcedContentType !== null)){
+				if(is_bool($forcedContentType) && $forcedContentType && (count($negotiationContentTypes) > 0)){
 					$bestContentType = $negotiationContentTypes[0]['origin'];
-				} else if(is_string($forceType) && !empty($forceType)){
-					$bestContentType = $forceType;
+				} else if(is_string($forcedContentType) && !empty($forcedContentType)){
+					$bestContentType = $forcedContentType;
 				}
 			}
 
@@ -166,7 +166,7 @@
 			return ob_get_clean();
 		}
 
-		public static function response($data, $forceType = null, $code = null, $message = null, $debug = 0){
+		public static function response($data, $forcedContentType = null, $code = null, $message = null, $debug = 0){
 			$response = null;
 			$exit_code = null;
 			$exit_message = null;
@@ -183,14 +183,13 @@
 					'error_description' => $data->getMessage(),
 				];
 
-				if($debug > 0) $transformedData = array_merge($transformedData, ['error_exception' => $data->__toString()]);
+				if($debug > 0) $transformedData = array_merge($transformedData, ['error_exception' => strtok($data->__toString(), "\n")]);
 				if($debug > 1) $transformedData = array_merge($transformedData, ['error_trace' => $data->getTraceAsString()]);
 
 				$data = $transformedData;
 			}
-
-			if(!static::getResponseContentType()){
-				$bestContentTypeStr = $forceType;
+			if(empty(static::getResponseContentType())){
+				$bestContentTypeStr = $forcedContentType;
 				if($bestContentTypeStr === null){
 					$bestContentTypeStr = static::getBestContentType([
 						'application/json; charset=utf-8',
@@ -416,8 +415,8 @@
 			$this->responseContentType = $responseContentType;
 		}
 
-		public function sendResponse($data, $forceType = null, $debug = null){
-			$this->response($data, ($forceType === null)? $this->responseContentType : $forceType, null, null, ($debug === null)? $this->debug : $debug);
+		public function sendResponse($data, $forcedContentType = null, $debug = null){
+			$this->response($data, ($forcedContentType === null)? $this->responseContentType : $forcedContentType, null, null, ($debug === null)? $this->debug : $debug);
 		}
 	}
 ?>
