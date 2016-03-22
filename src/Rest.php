@@ -8,6 +8,31 @@
 
 		const CONFIG_SERVICE = 'configuration';
 
+		public static function mime_type($filename, $forceCharset = 'utf-8'){
+			$filenames = explode('.', $filename);
+			$extension = $filenames[count($filenames) - 1];
+			$mime_type = 'text/plain';
+			switch($extension){
+				case 'html':
+					$mime_type = 'text/html';
+					break;
+				case 'js':
+					$mime_type = 'application/javascript';
+					break;
+				case 'css':
+					$mime_type = 'text/css';
+					break;
+				case 'png':
+					$mime_type = 'image/png';
+					break;
+				case 'svg':
+					$mime_type = 'image/svg+xml';
+					break;
+			}
+
+			return "{$mime_type}; charset={$forceCharset}";
+		}
+
 		public static function getReference(){
 			$protocol = (empty($_SERVER['HTTPS']) || ($_SERVER['HTTPS'] == 'off'))? 'http' : 'https';
 			$host = (isset($_SERVER['HTTP_HOST']))? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME'];
