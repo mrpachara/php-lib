@@ -84,7 +84,7 @@
 				if($data['self']['_updatable']) $config->addNewLinks($data, [
 					[
 						'href' => $data['uri'],
-						'rel' => 'action', 'alias' => 'save', 'method' => 'put',
+						'rel' => 'action', 'alias' => 'save', 'method' => 'put', 'action' => 'Edit',
 						'title' => 'Edit', 'icon' => 'editor:ic-mode-edit',
 					],
 				]);
@@ -103,7 +103,7 @@
 		} else if($GLOBALS['_rest']->isMethod('DELETE')){
 			$_service->delete($reqParams['id']);
 			$data['status'] = 'deleted';
-			$data['info'] = $GLOBALS['_rest']->getServicePath($data['id'])." was deleted";
+			$data['info'] = $data['uri']." was deleted";
 		} else{
 			throw new \sys\HttpMethodNotAllowedException();
 		}

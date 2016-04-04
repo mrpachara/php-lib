@@ -8,6 +8,7 @@
 		'uri' => $GLOBALS['_rest']->getConfigUri(),
 		'links' => [
 			['rel' => 'service', 'href' => $GLOBALS['_rest']->getModulePath("data01"), 'alias' => "data01"],
+			['rel' => 'service', 'href' => $GLOBALS['_rest']->getModulePath("data01/{{ id }}"), 'alias' => "data01-item"],
 			['rel' => 'resource', 'href' => $GLOBALS['_rest']->getModulePath("data01-domain"), 'alias' => "data01-domain"],
 		],
 	];
