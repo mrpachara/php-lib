@@ -85,7 +85,7 @@
 					[
 						'href' => $data['uri'],
 						'rel' => 'action', 'alias' => 'save', 'method' => 'put', 'action' => 'Edit',
-						'title' => 'Edit', 'icon' => 'editor:ic-mode-edit',
+						'title' => 'Edit', 'icon' => 'editor:ic-mode-edit', 'class' => 'primary',
 					],
 				]);
 				if($data['self']['_deletable']) $config->addNewLinks($data, [
@@ -93,6 +93,13 @@
 						'href' => $data['uri'],
 						'rel' => 'action',  'alias' => 'delete', 'method' => 'delete',
 						'title' => 'Delete', 'icon' => 'action:ic-delete', 'class' => 'warn',
+					],
+				]);
+				$config->addNewLinks($data, [
+					[
+						'href' => $data['uri'],
+						'rel' => 'action',  'alias' => 'test', 'method' => 'get',
+						'title' => 'Test', 'icon' => 'action:ic-delete',
 					],
 				]);
 			}
