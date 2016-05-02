@@ -2,7 +2,6 @@
 	namespace rest\service01;
 
 	class Data01Service Extends \sys\DataService{
-		const NEWPARAM = '::initial';
 		const TABLE = 'stub.data01';
 
 		function __constructor($pdoconfigurated){

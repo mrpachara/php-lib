@@ -80,7 +80,7 @@
 			$this->prepareData($data);
 
 			$link = $this->link($uri);
-			if($link !== null) $data['links'][] = $this->extendLink($link);
+			if($link !== null) $data['links'][] = $this->extendLink($link, $extend);
 
 			return ($link !== null);
 		}

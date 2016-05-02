@@ -21,23 +21,18 @@
 				$GLOBALS['_rest']->getQuery() : $GLOBALS['_rest']->getContent();
 
 			$data['self'] = $_service->getAll($options);
+			$data['name'] = ['Data01'];
+			$data['search'] = 'term';
 
-			$config->addNewLinks($data, [
-				[
-					'href' => $GLOBALS['_rest']->getServicePath('{{ id }}'),
-					'rel' => 'action', 'alias' => 'view',
-					'link' => "data01Item({id: item.id})",
-					'title' => 'View', 'icon' => 'action:ic-pageview',
-				],
+			$config->addLink($data, 'data01-item', [
+				'rel' => 'resource/item', 'alias' => 'view',
+			]);
+			$config->addLink($data, 'data01-item', [
+				'rel' => 'resource/item', 'alias' => 'preview',
 			]);
 			if($GLOBALS['_grantservice']->authoz('ADMIN')){
-				$config->addNewLinks($data, [
-					[
-						'href' => $GLOBALS['_rest']->getServicePath($_service::NEWPARAM),
-						'rel' => 'action/global', 'alias' => 'new',
-						'link' => "data01Item({id: '".$_service::NEWPARAM."'})",
-						'title' => 'New', 'icon' => 'content:ic-add',
-					],
+				$config->addLink($data, 'data01-new', [
+					'rel' => 'resource', 'alias' => 'new',
 				]);
 			}
 			//if(is_array($options['page'])) $data['page'] = $options['page'];
@@ -46,7 +41,7 @@
 			$data['uri'] = $GLOBALS['_rest']->getServicePath(
 				$_service->save(null, $GLOBALS['_rest']->getContent(), $GLOBALS['_grantservice']->getUsername())
 			);
-			$data['replace'] = $GLOBALS['_rest']->getServicePath($_service::NEWPARAM);
+			$data['replace'] = $GLOBALS['_rest']->getServicePath($config->prop('new-method'));
 			$data['status'] = 'created';
 			$data['info'] = $data['uri']." was created";
 		} else{
@@ -57,9 +52,10 @@
 	Call with new parameter
 =================================================
 */
-	} else if($reqParams['id'] === $_service::NEWPARAM){
+	} else if($reqParams['id'] === $config->prop('new-method')){
 		if($GLOBALS['_rest']->isMethod('GET')){
 			$data['self'] = $_service->get(null);
+			$data['name'] = ['Data01', $config->prop('new-method')];
 			if($GLOBALS['_grantservice']->authoz('ADMIN')){
 				$config->addNewLinks($data, [
 					[
@@ -80,26 +76,18 @@
 	} else{
 		if($GLOBALS['_rest']->isMethod('GET')){
 			$data['self'] = $_service->get($reqParams['id']);
+			$data['name'] = ['Data01', $data['self']['id']];
 			if($GLOBALS['_grantservice']->authoz('ADMIN')){
 				if($data['self']['_updatable']) $config->addNewLinks($data, [
 					[
 						'href' => $data['uri'],
-						'rel' => 'action', 'alias' => 'save', 'method' => 'put', 'action' => 'Edit',
-						'title' => 'Edit', 'icon' => 'editor:ic-mode-edit', 'class' => 'primary',
+						'rel' => 'resource', 'alias' => 'save', 'method' => 'put',
 					],
 				]);
 				if($data['self']['_deletable']) $config->addNewLinks($data, [
 					[
 						'href' => $data['uri'],
-						'rel' => 'action',  'alias' => 'delete', 'method' => 'delete',
-						'title' => 'Delete', 'icon' => 'action:ic-delete', 'class' => 'warn',
-					],
-				]);
-				$config->addNewLinks($data, [
-					[
-						'href' => $data['uri'],
-						'rel' => 'action',  'alias' => 'test', 'method' => 'get',
-						'title' => 'Test', 'icon' => 'action:ic-delete',
+						'rel' => 'resource',  'alias' => 'delete', 'method' => 'delete',
 					],
 				]);
 			}
